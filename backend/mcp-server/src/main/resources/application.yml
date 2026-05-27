@@ -4,6 +4,12 @@ server:
 spring:
   application:
     name: ontology-mcp-server
+  mvc:
+    async:
+      request-timeout: 120000  # SSE 连接超时设为 2 分钟，防止 LLM 思考期间断开
+  servlet:
+    multipart:
+      max-request-size: 10MB
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
     url: jdbc:mysql://localhost:3306/ontology?useUnicode=true&characterEncoding=utf-8&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true&useSSL=false

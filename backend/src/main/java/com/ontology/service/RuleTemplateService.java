@@ -11,6 +11,8 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -37,6 +39,7 @@ public class RuleTemplateService {
             ensureLinkTypeRules(linkType);
         }
         actionRuleParamMapper.deleteInvalidOntologyBindings();
+        cleanupOrphanedRules();
     }
 
     @Transactional
@@ -418,6 +421,55 @@ public class RuleTemplateService {
     private String resolveProjectIdForLinkType(String linkTypeId) {
         LinkType linkType = linkTypeMapper.selectById(linkTypeId);
         return linkType != null ? ProjectScope.normalize(linkType.getProjectId()) : ProjectScope.PUBLIC_PROJECT_ID;
+    }
+
+    private void cleanupOrphanedRules() {
+        Set<String> validLinkTypeIds = linkTypeMapper.selectList(null).stream()
+                .map(LinkType::getId).collect(Collectors.toSet());
+        Set<String> validObjectTypeIds = objectTypeMapper.selectList(null).stream()
+                .map(ObjectType::getId).collect(Collectors.toSet());
+
+        for (OntologyRule rule : ontologyRuleMapper.selectList(null)) {
+            String url = rule.getInterfaceUrl();
+            if (url == null || url.isBlank()) continue;
+
+            String linkTypeId = extractAfter(url, "/api/link-instances/");
+            if (linkTypeId != null && !validLinkTypeIds.contains(linkTypeId)) {
+                deleteOrphanedRuleArtifacts(rule.getId());
+                continue;
+            }
+
+            String objectTypeId = extractAfter(url, "/api/instances/");
+            if (objectTypeId != null && !validObjectTypeIds.contains(objectTypeId)) {
+                deleteOrphanedRuleArtifacts(rule.getId());
+            }
+        }
+    }
+
+    private void deleteOrphanedRuleArtifacts(String ruleId) {
+        List<ActionRule> actionRules = actionRuleMapper.selectList(
+                new LambdaQueryWrapper<ActionRule>()
+                        .eq(ActionRule::getOntologyRuleId, ruleId));
+        for (ActionRule ar : actionRules) {
+            actionEffectMapper.deleteByActionTypeId(ar.getActionTypeId());
+            actionRuleParamMapper.deleteByActionTypeId(ar.getActionTypeId());
+            actionRuleMapper.deleteByActionTypeId(ar.getActionTypeId());
+            actionTypeMapper.deleteById(ar.getActionTypeId());
+        }
+
+        ontologyRuleParamMapper.deleteByRuleId(ruleId);
+        ontologyRuleMapper.deleteById(ruleId);
+    }
+
+    private String extractAfter(String url, String prefix) {
+        int index = url.indexOf(prefix);
+        if (index < 0) return null;
+        String tail = url.substring(index + prefix.length());
+        int slash = tail.indexOf("/");
+        if (slash >= 0) {
+            tail = tail.substring(0, slash);
+        }
+        return tail.isBlank() ? null : tail;
     }
 
     private boolean isBlank(String value) {

@@ -7,6 +7,7 @@ and exposes a chat API via FastAPI.
 import os
 import json
 import uuid
+import asyncio
 import logging
 from contextlib import asynccontextmanager
 from typing import Optional
@@ -47,24 +48,37 @@ class MCPClient:
         self._transport_ctx = None
         self._session_ctx = None
         self.tools_meta = []
+        self._reconnecting = False
 
     async def connect(self):
         """Connect (or reconnect) to the MCP server."""
-        # Try to create a new connection; don't touch self.session until success
-        transport_ctx = sse_client(self.url)
-        transport = await transport_ctx.__aenter__()
-        session_ctx = ClientSession(transport[0], transport[1])
-        session = await session_ctx.__aenter__()
-        await session.initialize()
-        tools_result = await session.list_tools()
-        # Only update instance state on success
-        # Discard old session references (don't await __aexit__ — it fails in a different task context)
-        self._transport_ctx = transport_ctx
-        self._session_ctx = session_ctx
-        self.session = session
-        self.tools_meta = tools_result.tools
-        logger.info(f"MCP Client connected to {self.url}")
-        logger.info(f"Available tools: {[t.name for t in self.tools_meta]}")
+        if self._reconnecting:
+            logger.info("Reconnection already in progress, waiting...")
+            for _ in range(30):
+                await asyncio.sleep(0.5)
+                if not self._reconnecting and self.session:
+                    return
+            raise RuntimeError("MCP reconnection timed out")
+
+        self._reconnecting = True
+        try:
+            # Close old session state before creating new one
+            await self._cleanup()
+            transport_ctx = sse_client(self.url)
+            transport = await transport_ctx.__aenter__()
+            session_ctx = ClientSession(transport[0], transport[1])
+            session = await session_ctx.__aenter__()
+            await session.initialize()
+            tools_result = await session.list_tools()
+            # Only update instance state on success
+            self._transport_ctx = transport_ctx
+            self._session_ctx = session_ctx
+            self.session = session
+            self.tools_meta = tools_result.tools
+            logger.info(f"MCP Client connected to {self.url}")
+            logger.info(f"Available tools: {[t.name for t in self.tools_meta]}")
+        finally:
+            self._reconnecting = False
 
     @classmethod
     async def create(cls, url: str):
@@ -73,11 +87,24 @@ class MCPClient:
         await client.connect()
         return client
 
-    async def close(self):
+    async def _cleanup(self):
+        """Close old session/transport without logging (used during reconnection)."""
+        self.session = None
         if self._session_ctx:
-            await self._session_ctx.__aexit__(None, None, None)
+            try:
+                await self._session_ctx.__aexit__(None, None, None)
+            except Exception:
+                pass
+            self._session_ctx = None
         if self._transport_ctx:
-            await self._transport_ctx.__aexit__(None, None, None)
+            try:
+                await self._transport_ctx.__aexit__(None, None, None)
+            except Exception:
+                pass
+            self._transport_ctx = None
+
+    async def close(self):
+        await self._cleanup()
         logger.info("MCP Client disconnected")
 
     async def call_tool(self, name: str, arguments: dict) -> str:

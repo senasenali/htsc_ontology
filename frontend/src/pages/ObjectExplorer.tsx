@@ -187,12 +187,29 @@ export function ObjectExplorer({ data }: ObjectExplorerProps) {
   const fetchGraphData = useCallback(async () => {
     if (!selectedObjectType || !selectedInstance || !primaryKeyProp) {
       console.log('fetchGraphData early return:', { selectedObjectType, selectedInstance, primaryKeyProp });
+      setGraphData(null);
       return;
     }
-    
+
     const instanceId = selectedInstance[primaryKeyProp.id];
     console.log('fetchGraphData instanceId:', instanceId, 'from prop:', primaryKeyProp.id);
-    if (!instanceId) return;
+    if (!instanceId) {
+      // 主键为空时构造一个单节点图谱，让用户能看到实例卡片
+      const fallbackLabel = Object.values(selectedInstance).find(v => v && String(v).trim()) || '未命名实例';
+      setGraphData({
+        nodes: [{
+          id: `unknown:${selectedObjectType}`,
+          objectTypeId: selectedObjectType,
+          objectTypeName: currentObjectType?.name || selectedObjectType,
+          instanceId: String(fallbackLabel),
+          label: String(fallbackLabel),
+          data: selectedInstance,
+          depth: 0,
+        }],
+        links: [],
+      });
+      return;
+    }
     
     setGraphLoading(true);
     try {

@@ -175,7 +175,7 @@ export function LinkTypes({ data, onUpdate }: { data: OntologyData, onUpdate: (d
         sourceObjectId: newLinkSource,
         targetObjectId: newLinkTarget,
         cardinality: newLinkCardinality,
-        linkCategory: categoryToSend || undefined,
+        linkCategory: categoryToSend,
         description: newLinkDesc,
         sourceColumn: newLinkSourceColumn,
         targetColumn: newLinkTargetColumn,
@@ -206,7 +206,7 @@ export function LinkTypes({ data, onUpdate }: { data: OntologyData, onUpdate: (d
       setEditLinkCategory('__custom__');
       setEditCategoryCustom(lt.linkCategory);
     } else {
-      setEditLinkCategory(lt.linkCategory || '');
+      setEditLinkCategory(lt.linkCategory || '__none__');
       setEditCategoryCustom('');
     }
     setEditLinkDesc(lt.description || '');
@@ -225,7 +225,7 @@ export function LinkTypes({ data, onUpdate }: { data: OntologyData, onUpdate: (d
         sourceObjectId: editLinkSource,
         targetObjectId: editLinkTarget,
         cardinality: editLinkCardinality,
-        linkCategory: categoryToSend || undefined,
+        linkCategory: categoryToSend,
         description: editLinkDesc,
         sourceColumn: editLinkSourceColumn,
         targetColumn: editLinkTargetColumn,

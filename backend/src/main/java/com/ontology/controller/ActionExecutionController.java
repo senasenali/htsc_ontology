@@ -217,7 +217,7 @@ public class ActionExecutionController {
             }
 
             String tableName = objectType.getBackingDataset();
-            List<Property> properties = propertyMapper.selectByObjectTypeId(objectTypeId);
+            List<Property> properties = propertyMapper.selectByObjectTypeId(objectTypeId, objectType.getProjectId());
             List<OntologyRuleParam> inputParams = ontologyRuleParamMapper.selectInputParamsByRuleId(rule.getId());
 
             // 构建属性映射

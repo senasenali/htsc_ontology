@@ -188,7 +188,7 @@ if [ -f "requirements.txt" ]; then
     echo "Installing Python dependencies..."
     uv pip install -r requirements.txt
     if [ -f ".env" ]; then
-        source .venv/bin/activate && python main.py &
+        source .venv/bin/activate && no_proxy=localhost,127.0.0.1 python main.py &
         MCP_CLIENT_PID=$!
         echo "  MCP Client starting on port 8001 (PID: $MCP_CLIENT_PID)"
     fi

@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Label } from '@/src/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/src/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/src/components/ui/tabs';
-import { Plus, Trash2, Edit, Play, ChevronDown, ChevronRight } from 'lucide-react';
+import { Plus, Trash2, Edit, Play, ChevronDown, ChevronRight, Search } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/src/lib/utils';
 
@@ -107,6 +107,8 @@ export function ActionTypes() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingAction, setEditingAction] = useState<ActionType | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [categoryFilter, setCategoryFilter] = useState('CREATE_OBJECT');
+  const [search, setSearch] = useState('');
 
   // Form state
   const [formData, setFormData] = useState<Partial<ActionType>>({
@@ -482,6 +484,17 @@ export function ActionTypes() {
     return functionTypes.find(f => f.id === id);
   };
 
+  const filteredActionTypes = actionTypes.filter(action => {
+    const category = action.rules?.[0]?.ontologyRuleCategory;
+    if (categoryFilter !== 'all' && category !== categoryFilter) return false;
+    if (!search) return true;
+    const q = search.toLowerCase();
+    return (
+      action.displayName.toLowerCase().includes(q) ||
+      (action.description || '').toLowerCase().includes(q)
+    );
+  });
+
   return (
     <div className="p-6 space-y-6">
       <div className="flex items-center justify-between">
@@ -495,8 +508,31 @@ export function ActionTypes() {
         </Button>
       </div>
 
+      <div className="flex gap-4">
+        <div className="relative flex-1 max-w-md">
+          <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+          <Input
+            placeholder="搜索动作类型名称..."
+            className="pl-9"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+        </div>
+        <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+          <SelectTrigger className="w-48">
+            <SelectValue placeholder="筛选类别" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">全部类别</SelectItem>
+            {RULE_CATEGORIES.map((c) => (
+              <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
       <div className="grid gap-4">
-        {actionTypes.map((action) => {
+        {filteredActionTypes.map((action) => {
           const isExpanded = expandedId === action.id;
           return (
             <Card key={action.id} className="hover:shadow-md transition-shadow">

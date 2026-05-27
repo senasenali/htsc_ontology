@@ -42,7 +42,7 @@ public class InstanceDataController {
         }
         
         // 获取属性列表
-        List<Property> properties = propertyMapper.selectByObjectTypeId(objectTypeId);
+        List<Property> properties = propertyMapper.selectByObjectTypeId(objectTypeId, objectType.getProjectId());
         
         // 构建查询列
         List<String> columns = new ArrayList<>();
@@ -98,7 +98,7 @@ public class InstanceDataController {
         }
         
         String tableName = objectType.getBackingDataset();
-        List<Property> properties = propertyMapper.selectByObjectTypeId(objectTypeId);
+        List<Property> properties = propertyMapper.selectByObjectTypeId(objectTypeId, objectType.getProjectId());
         
         // 找到主键属性
         Property pkProp = properties.stream()
@@ -150,7 +150,7 @@ public class InstanceDataController {
         }
         
         String tableName = objectType.getBackingDataset();
-        List<Property> properties = propertyMapper.selectByObjectTypeId(objectTypeId);
+        List<Property> properties = propertyMapper.selectByObjectTypeId(objectTypeId, objectType.getProjectId());
         
         // 构建插入语句
         List<String> columns = new ArrayList<>();
@@ -202,7 +202,7 @@ public class InstanceDataController {
         }
         
         String tableName = objectType.getBackingDataset();
-        List<Property> properties = propertyMapper.selectByObjectTypeId(objectTypeId);
+        List<Property> properties = propertyMapper.selectByObjectTypeId(objectTypeId, objectType.getProjectId());
         
         // 找到主键属性
         Property pkProp = properties.stream()
@@ -264,7 +264,7 @@ public class InstanceDataController {
         }
         
         String tableName = objectType.getBackingDataset();
-        List<Property> properties = propertyMapper.selectByObjectTypeId(objectTypeId);
+        List<Property> properties = propertyMapper.selectByObjectTypeId(objectTypeId, objectType.getProjectId());
         
         // 找到主键属性
         Property pkProp = properties.stream()

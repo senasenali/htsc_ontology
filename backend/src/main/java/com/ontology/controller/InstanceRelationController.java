@@ -49,7 +49,7 @@ public class InstanceRelationController {
         }
         
         // 获取该对象类型的属性
-        List<Property> properties = propertyMapper.selectByObjectTypeId(objectTypeId);
+        List<Property> properties = propertyMapper.selectByObjectTypeId(objectTypeId, objectType.getProjectId());
         Property pkProperty = properties.stream()
                 .filter(p -> p.getIsPrimaryKey() != null && p.getIsPrimaryKey() == 1)
                 .findFirst()
@@ -110,7 +110,7 @@ public class InstanceRelationController {
         ObjectType currentOt = objectTypeMapper.selectById(currentObjectTypeId);
         if (currentOt == null) return;
         
-        List<Property> currentProps = propertyMapper.selectByObjectTypeId(currentObjectTypeId);
+        List<Property> currentProps = propertyMapper.selectByObjectTypeId(currentObjectTypeId, currentOt.getProjectId());
         Property currentPk = currentProps.stream()
                 .filter(p -> p.getIsPrimaryKey() != null && p.getIsPrimaryKey() == 1)
                 .findFirst()
