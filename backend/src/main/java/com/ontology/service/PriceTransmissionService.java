@@ -38,6 +38,10 @@ public class PriceTransmissionService {
                 return Map.of("success", false, "error", "Object type not found: " + sourceObjectTypeId);
             }
 
+            Set<String> transmissionWhitelist = queryPriceTransmissionWhitelist();
+            Map<String, List<CoefficientEntry>> materialCoefficientMap = preloadMaterialCoefficients();
+            Map<String, String> parentTypeMap = queryParentTypeMap();
+
             Map<String, Object> sourceInstance = queryInstanceRow(sourceMeta, sourceInstanceId);
             if (sourceInstance == null) {
                 return Map.of("success", false, "error", "Instance not found: " + sourceObjectTypeId + ":" + sourceInstanceId);
@@ -111,15 +115,29 @@ public class PriceTransmissionService {
                     boolean currentIsTarget = current.objectTypeId().equals(targetTypeId)
                             && current.instanceId().equals(relationTargetInstanceId);
                     if (!currentIsSource && !currentIsTarget) continue;
+                    // 下游传导：仅 source → target，跳过反向传导
+                    if (currentIsTarget) continue;
 
-                    String nextObjectTypeId = currentIsSource ? targetTypeId : sourceTypeId;
-                    String nextInstanceId = currentIsSource ? relationTargetInstanceId : relationSourceInstanceId;
+                    String nextObjectTypeId = targetTypeId;
+                    String nextInstanceId = relationTargetInstanceId;
                     InstanceObjectTypeMeta nextMeta = objectTypeMeta.get(nextObjectTypeId);
                     if (nextMeta == null) continue;
+                    // 白名单过滤：不在白名单中的类型不参与价格传导
+                    if (!transmissionWhitelist.contains(nextObjectTypeId)) continue;
 
                     int nextDepth = current.depth() + 1;
                     String currentNodeId = nodeId(current.objectTypeId(), current.instanceId());
                     String nextNodeId = nodeId(nextObjectTypeId, nextInstanceId);
+
+                    // 查询边的传导系数（带上下文验证）
+                    Optional<Double> resolvedCoeff = getEdgeCoefficient(
+                            current.objectTypeId(), nextObjectTypeId, materialCoefficientMap, parentTypeMap);
+                    boolean isQualitative = resolvedCoeff.isEmpty();
+                    double edgeCoefficient = resolvedCoeff.orElse(0.05);
+                    double depthDecay = Math.pow(0.8, Math.max(0, nextDepth - 1));
+                    double rawImpactPercent = sourcePriceChangePercent * edgeCoefficient * depthDecay;
+                    Double impactPercentOrNull = isQualitative ? null : rawImpactPercent;
+
                     Integer knownDepth = depthByNode.get(nextNodeId);
                     if (knownDepth == null) {
                         Map<String, Object> nextRow = queryInstanceRow(nextMeta, nextInstanceId);
@@ -128,50 +146,62 @@ public class PriceTransmissionService {
                         double nextPreviousPrice = numberOrZero(nextRow.get("price"));
                         if (nextPreviousPrice <= 0) continue;
 
-                        double edgeCoefficient = 0.5;
-                        double depthDecay = Math.pow(0.8, Math.max(0, nextDepth - 1));
-                        double impactPercent = sourcePriceChangePercent * edgeCoefficient * depthDecay;
-                        double nextLatestPrice = applyChange(nextPreviousPrice, impactPercent);
+                        double nextLatestPrice = isQualitative
+                                ? nextPreviousPrice
+                                : applyChange(nextPreviousPrice, rawImpactPercent);
 
                         depthByNode.put(nextNodeId, nextDepth);
                         pathByNode.put(nextNodeId, appendPath(pathByNode.get(currentNodeId), nextNodeId));
                         queue.offer(new InstanceTraversalNode(nextObjectTypeId, nextInstanceId, nextDepth));
-                        nodes.add(buildInstanceTransmissionNode(
+
+                        Map<String, Object> node = buildInstanceTransmissionNode(
                                 nextMeta,
                                 nextRow,
                                 nextInstanceId,
                                 nextPreviousPrice,
                                 nextLatestPrice,
-                                impactPercent,
-                                nextDepth
-                        ));
+                                impactPercentOrNull,
+                                nextDepth);
+                        if (isQualitative) {
+                            node.put("coefficientType", "qualitative");
+                            node.put("priceChangePercent", null);
+                            node.put("changePercent", null);
+                            node.put("latestPrice", null);
+                            node.put("qualitativeNote", String.format(
+                                    "%s价格%s可能影响%s，缺少组成项数据，仅做方向性判断",
+                                    sourceMeta.name(),
+                                    sourcePriceChangePercent > 0 ? "上涨" : "下跌",
+                                    nextMeta.name()));
+                        }
+                        nodes.add(node);
                     } else if (knownDepth != nextDepth) {
                         continue;
                     }
 
                     String edgeKey = relation.get("id") + ":" + currentNodeId + ">" + nextNodeId;
                     if (visitedEdges.add(edgeKey)) {
-                        double edgeCoefficient = 0.5;
-                        double depthDecay = Math.pow(0.8, Math.max(0, nextDepth - 1));
-                        double impactPercent = sourcePriceChangePercent * edgeCoefficient * depthDecay;
+                        Double impactRounded = isQualitative ? null : round(rawImpactPercent, 2);
                         List<String> pathNodeIds = appendPath(pathByNode.get(currentNodeId), nextNodeId);
 
-                        edges.add(buildInstanceTransmissionEdge(
-                                currentNodeId,
-                                nextNodeId,
-                                relation,
-                                edgeCoefficient,
-                                depthDecay,
-                                round(impactPercent, 2)
-                        ));
+                        Map<String, Object> edge = buildInstanceTransmissionEdge(
+                                currentNodeId, nextNodeId, relation,
+                                edgeCoefficient, depthDecay, impactRounded);
+                        if (isQualitative) {
+                            edge.put("coefficientType", "qualitative");
+                            edge.put("impactPercent", null);
+                            edge.put("coefficient", null);
+                            edge.put("qualitativeNote", String.format(
+                                    "%s是%s的原材料，价格%s可能传导至%s，但因缺少组成项数据，无法计算精确传导系数",
+                                    sourceMeta.name(),
+                                    nextMeta.name(),
+                                    sourcePriceChangePercent > 0 ? "上涨" : "下跌",
+                                    nextMeta.name()));
+                        }
+                        edges.add(edge);
+
                         paths.add(buildInstanceTransmissionPath(
-                                pathNodeIds,
-                                relation,
-                                nextDepth,
-                                edgeCoefficient,
-                                depthDecay,
-                                round(impactPercent, 2)
-                        ));
+                                pathNodeIds, relation, nextDepth,
+                                edgeCoefficient, depthDecay, impactRounded));
                     }
                 }
             }
@@ -229,7 +259,7 @@ public class PriceTransmissionService {
             data.put("nodes", nodes);
             data.put("edges", edges);
             data.put("paths", paths);
-            data.put("transmissionCoefficient", round(sourcePriceChangePercent * 0.5, 2));
+            data.put("transmissionCoefficient", round(sourcePriceChangePercent, 2));
             data.put("affectedInstances", affectedInstances);
             data.put("summary", summary);
 
@@ -260,12 +290,25 @@ public class PriceTransmissionService {
             return Map.of("success", false, "error", "Object type not found: " + objectTypeId);
         }
 
+        // 获取价格传导白名单（仅白名单内的对象类型参与传导）
+        Set<String> transmissionWhitelist = queryPriceTransmissionWhitelist();
+        // 预加载组成项传导系数表（含上下文验证）
+        Map<String, List<CoefficientEntry>> materialCoefficientMap = preloadMaterialCoefficients();
+        // 对象类型父类型映射（用于系数上下文验证）
+        Map<String, String> parentTypeMap = queryParentTypeMap();
+
         Map<String, Integer> depthByObjectType = new LinkedHashMap<>();
         Queue<String> queue = new LinkedList<>();
         List<Map<String, Object>> edges = new ArrayList<>();
         List<Map<String, Object>> paths = new ArrayList<>();
         Set<String> visitedEdges = new HashSet<>();
         Map<String, List<String>> pathByObjectType = new LinkedHashMap<>();
+        List<Map<String, Object>> dataUnavailableNotes = new ArrayList<>();
+        Set<String> dataUnavailableTypes = new HashSet<>();
+        // 记录每个节点首次被访问时的入边传导系数
+        Map<String, Double> incomingCoefficientMap = new HashMap<>();
+        // 记录通过定性传导（无精确系数）到达的节点
+        Set<String> qualitativeNodes = new HashSet<>();
 
         depthByObjectType.put(objectTypeId, 0);
         pathByObjectType.put(objectTypeId, List.of(objectTypeId));
@@ -280,15 +323,59 @@ public class PriceTransmissionService {
             for (Map<String, Object> linkType : linkTypes) {
                 String sourceId = (String) linkType.get("sourceObjectId");
                 String targetId = (String) linkType.get("targetObjectId");
-                String nextObjectTypeId = currentObjectTypeId.equals(sourceId) ? targetId : sourceId;
+                // 下游传导：仅沿 source → target 方向遍历，跳过反向链接
+                if (currentObjectTypeId.equals(targetId)) continue;
+                String nextObjectTypeId = targetId;
                 if (nextObjectTypeId == null || nextObjectTypeId.equals(currentObjectTypeId)) continue;
                 if (!objectTypeMeta.containsKey(nextObjectTypeId)) continue;
 
+                // 白名单过滤：不在白名单中的类型不参与价格传导
+                if (!transmissionWhitelist.contains(nextObjectTypeId)) continue;
+
+                // 处理数据不可得类型（如 new_energy_vehicle）：创建占位节点，不继续遍历
+                if (isDataUnavailableObjectType(nextObjectTypeId)) {
+                    int nextDepth = currentDepth + 1;
+                    if (!depthByObjectType.containsKey(nextObjectTypeId)) {
+                        depthByObjectType.put(nextObjectTypeId, nextDepth);
+                        pathByObjectType.put(nextObjectTypeId, appendPath(pathByObjectType.get(currentObjectTypeId), nextObjectTypeId));
+                        dataUnavailableTypes.add(nextObjectTypeId);
+                    }
+                    String edgeKey = linkType.get("id") + ":" + currentObjectTypeId + ">" + nextObjectTypeId;
+                    if (visitedEdges.add(edgeKey)) {
+                        Optional<Double> resolvedPlaceholderCoeff = getEdgeCoefficient(
+                                currentObjectTypeId, nextObjectTypeId, materialCoefficientMap, parentTypeMap);
+                        double edgeCoefficient = resolvedPlaceholderCoeff.orElse(0.05);
+                        double depthDecay = Math.pow(0.8, Math.max(0, nextDepth - 1));
+                        double impactPercent = priceChangePercent * edgeCoefficient * depthDecay;
+                        edges.add(buildObjectTypeEdge(currentObjectTypeId, nextObjectTypeId,
+                                (String) linkType.get("id"), (String) linkType.get("name"),
+                                edgeCoefficient, depthDecay, round(impactPercent, 2), priceChangePercent));
+                        List<String> pathObjectTypeIds = appendPath(pathByObjectType.get(currentObjectTypeId), nextObjectTypeId);
+                        paths.add(buildObjectTypePath(pathObjectTypeIds, linkType, nextDepth,
+                                edgeCoefficient, depthDecay, round(impactPercent, 2)));
+                        Map<String, Object> meta = objectTypeMeta.get(nextObjectTypeId);
+                        dataUnavailableNotes.add(Map.of(
+                                "objectTypeId", nextObjectTypeId,
+                                "objectTypeName", meta != null ? meta.get("name") : nextObjectTypeId,
+                                "dataType", "placeholder",
+                                "hint", "需获取工信部公告（《道路机动车辆生产企业及产品》）中的单车带电量（kWh/辆）数据"
+                        ));
+                    }
+                    continue;
+                }
+
                 int nextDepth = currentDepth + 1;
+                // 按上下文查询传导系数：仅当目标类型属于该系数的有效体系时才使用精确值，否则定性处理
+                Optional<Double> resolvedCoeff = getEdgeCoefficient(
+                        currentObjectTypeId, nextObjectTypeId, materialCoefficientMap, parentTypeMap);
+                boolean isQualitative = resolvedCoeff.isEmpty();
+                double edgeCoefficient = resolvedCoeff.orElse(0.05);
                 Integer knownDepth = depthByObjectType.get(nextObjectTypeId);
                 if (knownDepth == null) {
+                    incomingCoefficientMap.put(nextObjectTypeId, edgeCoefficient);
                     depthByObjectType.put(nextObjectTypeId, nextDepth);
                     pathByObjectType.put(nextObjectTypeId, appendPath(pathByObjectType.get(currentObjectTypeId), nextObjectTypeId));
+                    if (isQualitative) qualitativeNodes.add(nextObjectTypeId);
                     queue.offer(nextObjectTypeId);
                 } else if (knownDepth != nextDepth) {
                     continue;
@@ -296,56 +383,104 @@ public class PriceTransmissionService {
 
                 String edgeKey = linkType.get("id") + ":" + currentObjectTypeId + ">" + nextObjectTypeId;
                 if (visitedEdges.add(edgeKey)) {
-                    double edgeCoefficient = 0.5;
                     double depthDecay = Math.pow(0.8, Math.max(0, nextDepth - 1));
                     double impactPercent = priceChangePercent * edgeCoefficient * depthDecay;
                     List<String> pathObjectTypeIds = appendPath(pathByObjectType.get(currentObjectTypeId), nextObjectTypeId);
-                    edges.add(buildObjectTypeEdge(
+                    Map<String, Object> edge = buildObjectTypeEdge(
                             currentObjectTypeId,
                             nextObjectTypeId,
                             (String) linkType.get("id"),
                             (String) linkType.get("name"),
                             edgeCoefficient,
                             depthDecay,
-                            round(impactPercent, 2)
-                    ));
-                    paths.add(buildObjectTypePath(
+                            isQualitative ? null : round(impactPercent, 2),
+                            priceChangePercent);
+                    if (isQualitative) {
+                        edge.put("coefficientType", "qualitative");
+                        edge.put("impactPercent", null);
+                        edge.put("coefficient", null);
+                        edge.put("qualitativeNote", String.format(
+                                "%s是%s的原材料，价格%s可能传导至%s，但因缺少组成项数据，无法计算精确传导系数",
+                                objectTypeMeta.get(currentObjectTypeId).get("name"),
+                                objectTypeMeta.get(nextObjectTypeId).get("name"),
+                                priceChangePercent > 0 ? "上涨" : "下跌",
+                                objectTypeMeta.get(nextObjectTypeId).get("name")));
+                    }
+                    edges.add(edge);
+                    Map<String, Object> path = buildObjectTypePath(
                             pathObjectTypeIds,
                             linkType,
                             nextDepth,
                             edgeCoefficient,
                             depthDecay,
-                            round(impactPercent, 2)
-                    ));
+                            isQualitative ? null : round(impactPercent, 2));
+                    if (isQualitative) {
+                        path.put("coefficientType", "qualitative");
+                        path.put("impactPercent", null);
+                    }
+                    paths.add(path);
                 }
             }
         }
 
         List<Map<String, Object>> nodes = new ArrayList<>();
         for (Map.Entry<String, Integer> entry : depthByObjectType.entrySet()) {
-            String currentObjectTypeId = entry.getKey();
+            String nodeObjectTypeId = entry.getKey();
             int nodeDepth = entry.getValue();
-            Map<String, Object> meta = objectTypeMeta.get(currentObjectTypeId);
-            String tableName = (String) meta.get("backingDataset");
+            Map<String, Object> meta = objectTypeMeta.get(nodeObjectTypeId);
             String objectTypeName = (String) meta.get("name");
-            double baselinePrice = currentObjectTypeId.equals(objectTypeId) && isPositive(previousPrice)
+
+            // 占位节点（数据不可得，如 new_energy_vehicle）
+            if (dataUnavailableTypes.contains(nodeObjectTypeId)) {
+                Map<String, Object> placeholderNode = new LinkedHashMap<>();
+                placeholderNode.put("id", nodeObjectTypeId);
+                placeholderNode.put("name", objectTypeName);
+                placeholderNode.put("subtitle", "需补充数据");
+                placeholderNode.put("depth", nodeDepth);
+                placeholderNode.put("placeholder", true);
+                placeholderNode.put("dataUnavailable", true);
+                nodes.add(placeholderNode);
+                continue;
+            }
+
+            String tableName = (String) meta.get("backingDataset");
+            double baselinePrice = nodeObjectTypeId.equals(objectTypeId) && isPositive(previousPrice)
                     ? previousPrice
-                    : medianPriceOrDefault(tableName, defaultPriceForObjectType(currentObjectTypeId));
-            double nodeImpactPercent = nodeDepth == 0
-                    ? priceChangePercent
-                    : priceChangePercent * 0.5 * Math.pow(0.8, Math.max(0, nodeDepth - 1));
-            double nodeLatestPrice = currentObjectTypeId.equals(objectTypeId) && isPositive(latestPrice)
-                    ? latestPrice
-                    : applyChange(baselinePrice, nodeImpactPercent);
-            nodes.add(buildObjectTypeNode(
-                    currentObjectTypeId,
-                    objectTypeName,
-                    "L" + (nodeDepth + 1) + " / " + objectTypeName,
-                    baselinePrice,
-                    nodeLatestPrice,
-                    nodeImpactPercent,
-                    nodeDepth
-            ));
+                    : medianPriceOrDefault(tableName, defaultPriceForObjectType(nodeObjectTypeId));
+            double nodeCoefficient = nodeDepth == 0 ? 0 : incomingCoefficientMap.getOrDefault(nodeObjectTypeId, 0.3);
+            boolean nodeIsQualitative = nodeDepth > 0 && qualitativeNodes.contains(nodeObjectTypeId);
+
+            Map<String, Object> node;
+            if (nodeIsQualitative) {
+                // 定性节点：不展示数值，仅保留基线价格
+                double qualBaselinePrice = nodeObjectTypeId.equals(objectTypeId) && isPositive(previousPrice)
+                        ? previousPrice : baselinePrice;
+                node = buildObjectTypeNode(
+                        nodeObjectTypeId, objectTypeName,
+                        "L" + (nodeDepth + 1) + " / " + objectTypeName,
+                        qualBaselinePrice, qualBaselinePrice, null, nodeDepth);
+                node.put("coefficientType", "qualitative");
+                node.put("priceChangePercent", null);
+                node.put("changePercent", null);
+                node.put("latestPrice", node.get("previousPrice"));
+                node.put("qualitativeNote", String.format(
+                        "%s价格%s可能影响%s，缺少组成项数据，仅做方向性判断",
+                        objectTypeMeta.get(objectTypeId).get("name"),
+                        priceChangePercent > 0 ? "上涨" : "下跌",
+                        objectTypeName));
+            } else {
+                double nodeImpactPercent = nodeDepth == 0
+                        ? priceChangePercent
+                        : priceChangePercent * nodeCoefficient * Math.pow(0.8, Math.max(0, nodeDepth - 1));
+                double nodeLatestPrice = nodeObjectTypeId.equals(objectTypeId) && isPositive(latestPrice)
+                        ? latestPrice
+                        : applyChange(baselinePrice, nodeImpactPercent);
+                node = buildObjectTypeNode(
+                        nodeObjectTypeId, objectTypeName,
+                        "L" + (nodeDepth + 1) + " / " + objectTypeName,
+                        baselinePrice, nodeLatestPrice, nodeImpactPercent, nodeDepth);
+            }
+            nodes.add(node);
         }
 
         Map<String, Object> summary = new LinkedHashMap<>();
@@ -373,10 +508,11 @@ public class PriceTransmissionService {
         data.put("edges", edges);
         data.put("paths", paths);
         data.put("summary", summary);
+        data.put("dataUnavailableNotes", dataUnavailableNotes);
 
         return Map.of("success", true, "data", data);
     }
-    
+
     private Map<String, Object> querySourceInstance(String instanceId) {
         String sql = "SELECT * FROM lithium_carbonate WHERE unique_id = ?";
         List<Map<String, Object>> results = jdbcTemplate.queryForList(sql, instanceId);
@@ -466,7 +602,7 @@ public class PriceTransmissionService {
             String instanceId,
             double previousPrice,
             double latestPrice,
-            double changePercent,
+            Double changePercent,
             int depth) {
         Map<String, Object> node = new LinkedHashMap<>();
         node.put("id", nodeId(meta.id(), instanceId));
@@ -477,8 +613,8 @@ public class PriceTransmissionService {
         node.put("label", resolveInstanceName(row, instanceId));
         node.put("previousPrice", round(previousPrice, 2));
         node.put("latestPrice", round(latestPrice, 2));
-        node.put("priceChangePercent", round(changePercent, 2));
-        node.put("changePercent", round(changePercent, 2));
+        node.put("priceChangePercent", changePercent != null ? round(changePercent, 2) : null);
+        node.put("changePercent", changePercent != null ? round(changePercent, 2) : null);
         node.put("depth", depth);
         node.put("data", row);
         return node;
@@ -490,7 +626,7 @@ public class PriceTransmissionService {
             Map<String, Object> relation,
             double edgeCoefficient,
             double depthDecay,
-            double impactPercent) {
+            Double impactPercent) {
         Map<String, Object> edge = new LinkedHashMap<>();
         edge.put("source", source);
         edge.put("target", target);
@@ -502,7 +638,9 @@ public class PriceTransmissionService {
         edge.put("depthDecay", round(depthDecay, 2));
         edge.put("impactPercent", impactPercent);
         edge.put("coefficient", impactPercent);
-        edge.put("label", "影响 " + (impactPercent >= 0 ? "+" : "") + round(impactPercent, 2) + "%");
+        edge.put("label", impactPercent != null
+                ? "影响 " + (impactPercent >= 0 ? "+" : "") + round(impactPercent, 2) + "%"
+                : "方向性传导");
         return edge;
     }
 
@@ -512,7 +650,7 @@ public class PriceTransmissionService {
             int depth,
             double edgeCoefficient,
             double depthDecay,
-            double impactPercent) {
+            Double impactPercent) {
         Map<String, Object> path = new LinkedHashMap<>();
         path.put("instanceIds", instanceNodeIds);
         path.put("terminalLinkInstanceId", String.valueOf(terminalRelation.get("id")));
@@ -795,7 +933,7 @@ public class PriceTransmissionService {
             String subtitle,
             double previousPrice,
             double latestPrice,
-            double changePercent,
+            Double changePercent,
             int depth) {
         Map<String, Object> node = new LinkedHashMap<>();
         node.put("id", id);
@@ -803,8 +941,8 @@ public class PriceTransmissionService {
         node.put("subtitle", subtitle);
         node.put("previousPrice", round(previousPrice, 2));
         node.put("latestPrice", round(latestPrice, 2));
-        node.put("priceChangePercent", round(changePercent, 2));
-        node.put("changePercent", round(changePercent, 2));
+        node.put("priceChangePercent", changePercent != null ? round(changePercent, 2) : null);
+        node.put("changePercent", changePercent != null ? round(changePercent, 2) : null);
         node.put("level", subtitle);
         node.put("depth", depth);
         return node;
@@ -826,7 +964,8 @@ public class PriceTransmissionService {
             String linkTypeName,
             double edgeCoefficient,
             double depthDecay,
-            double impactPercent) {
+            Double impactPercent,
+            double priceChangePercent) {
         Map<String, Object> edge = new LinkedHashMap<>();
         edge.put("source", source);
         edge.put("target", target);
@@ -837,7 +976,9 @@ public class PriceTransmissionService {
         edge.put("depthDecay", round(depthDecay, 2));
         edge.put("impactPercent", impactPercent);
         edge.put("coefficient", impactPercent);
-        edge.put("label", "影响 " + (impactPercent >= 0 ? "+" : "") + round(impactPercent, 2) + "%");
+        edge.put("label", impactPercent != null
+                ? "影响 " + (impactPercent >= 0 ? "+" : "") + round(impactPercent, 2) + "%"
+                : "影响" + (priceChangePercent >= 0 ? "+" : "-"));
         return edge;
     }
 
@@ -847,7 +988,7 @@ public class PriceTransmissionService {
             int depth,
             double edgeCoefficient,
             double depthDecay,
-            double impactPercent) {
+            Double impactPercent) {
         Map<String, Object> path = new LinkedHashMap<>();
         path.put("objectTypeIds", objectTypeIds);
         path.put("terminalLinkTypeId", terminalLinkType.get("id"));
@@ -907,5 +1048,120 @@ public class PriceTransmissionService {
             case "new_energy_vehicle" -> 18.60;
             default -> 1.00;
         };
+    }
+
+    /**
+     * 查询价格传导白名单：仅原材料、电池原材料、正极材料、零部件父类下的 OT 参与传导，
+     * 以及新能源整车（占位提示）。
+     */
+    private Set<String> queryPriceTransmissionWhitelist() {
+        String sql = """
+                SELECT id FROM object_types
+                WHERE parent_object_type IN ('raw_materials', 'battery_raw_materials', 'cathode_material', 'components')
+                   OR id IN ('new_energy_vehicle')
+                """;
+        return new HashSet<>(jdbcTemplate.queryForList(sql, String.class));
+    }
+
+    /**
+     * 组成项传导系数条目：携带系数的有效上下文（该系数仅在传导至指定父类或其子类时有效）。
+     */
+    private record CoefficientEntry(double coefficient, String validTargetParentId) {}
+
+    /**
+     * 从所有 *_composition_item 表中预加载组成项传导系数。
+     * 每笔系数附带其有效目标父类型（如 cathode_material_composition_item 中的系数仅当目标为正极材料体系时有效）。
+     * 子类如果无独立系数则继承父类系数及上下文。
+     */
+    private Map<String, List<CoefficientEntry>> preloadMaterialCoefficients() {
+        Map<String, List<CoefficientEntry>> coefficientMap = new HashMap<>();
+
+        // 1. 收集所有 *_composition_item 表
+        List<Map<String, Object>> tables = jdbcTemplate.queryForList(
+                "SELECT TABLE_NAME FROM information_schema.tables " +
+                "WHERE TABLE_SCHEMA = (SELECT DATABASE()) AND TABLE_NAME LIKE '%_composition_item'"
+        );
+
+        // 2. 从每张表中读取 (composition_item_object_type_id, cost_ratio)，从表名提取有效目标父类型
+        for (Map<String, Object> table : tables) {
+            String tableName = (String) table.get("TABLE_NAME");
+            // 表名如 cathode_material_composition_item → 有效目标父类型为 cathode_material
+            String validTargetParentId = tableName.replace("_composition_item", "");
+            try {
+                String sql = String.format(
+                        "SELECT composition_item_object_type_id, cost_ratio FROM %s WHERE cost_ratio IS NOT NULL AND cost_ratio > 0",
+                        safeIdentifier(tableName)
+                );
+                List<Map<String, Object>> rows = jdbcTemplate.queryForList(sql);
+                for (Map<String, Object> row : rows) {
+                    String objectTypeId = (String) row.get("composition_item_object_type_id");
+                    Number costRatio = (Number) row.get("cost_ratio");
+                    if (objectTypeId != null && costRatio != null) {
+                        coefficientMap.computeIfAbsent(objectTypeId, k -> new ArrayList<>())
+                                .add(new CoefficientEntry(costRatio.doubleValue(), validTargetParentId));
+                    }
+                }
+            } catch (Exception ignored) {
+                // 跳过结构不符合预期的表
+            }
+        }
+
+        // 3. 子类继承父类系数及上下文（如 ternary 继承 cathode_material 的系数及 battery_cell 上下文）
+        List<Map<String, Object>> objectTypes = jdbcTemplate.queryForList(
+                "SELECT id, parent_object_type AS parentType FROM object_types WHERE parent_object_type IS NOT NULL"
+        );
+        for (Map<String, Object> ot : objectTypes) {
+            String childId = (String) ot.get("id");
+            String parentId = (String) ot.get("parentType");
+            if (!coefficientMap.containsKey(childId) && parentId != null && coefficientMap.containsKey(parentId)) {
+                coefficientMap.put(childId, new ArrayList<>(coefficientMap.get(parentId)));
+            }
+        }
+
+        return coefficientMap;
+    }
+
+    /**
+     * 获取边的传导系数。根据组成项上下文验证：系数仅在目标类型属于该系数的有效体系时生效，
+     * 否则返回 Optional.empty() 表示该边无系数数据（需做定性模糊传导）。
+     */
+    private Optional<Double> getEdgeCoefficient(
+            String sourceTypeId, String targetTypeId,
+            Map<String, List<CoefficientEntry>> coefficientMap,
+            Map<String, String> parentTypeMap) {
+        List<CoefficientEntry> entries = coefficientMap.get(sourceTypeId);
+        if (entries == null || entries.isEmpty()) return Optional.empty();
+
+        String targetParent = parentTypeMap.get(targetTypeId);
+        for (CoefficientEntry entry : entries) {
+            if (targetTypeId.equals(entry.validTargetParentId)
+                    || (targetParent != null && targetParent.equals(entry.validTargetParentId))) {
+                return Optional.of(entry.coefficient);
+            }
+        }
+        return Optional.empty();
+    }
+
+    /**
+     * 获取对象类型的父类型映射。
+     */
+    private Map<String, String> queryParentTypeMap() {
+        List<Map<String, Object>> rows = jdbcTemplate.queryForList(
+                "SELECT id, parent_object_type AS parentType FROM object_types WHERE parent_object_type IS NOT NULL"
+        );
+        Map<String, String> map = new HashMap<>();
+        for (Map<String, Object> row : rows) {
+            map.put((String) row.get("id"), (String) row.get("parentType"));
+        }
+        return map;
+    }
+
+
+
+    /**
+     * 判断对象类型是否当前无法获取价格数据（需外部数据源补充）。
+     */
+    private boolean isDataUnavailableObjectType(String objectTypeId) {
+        return "new_energy_vehicle".equals(objectTypeId);
     }
 }

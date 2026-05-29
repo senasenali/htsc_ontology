@@ -190,7 +190,7 @@ async function runLithiumPriceTracking(agentId: string, agent: any, projectId: s
       priceChangePercent: changePercent,
       previousPrice,
       latestPrice,
-      depth: 4,
+      depth: 3,
     }),
   });
 
@@ -283,7 +283,7 @@ router.post('/:id/manual-price-analysis', async (req, res) => {
 
     const latestPrice = Number(req.body?.latestPrice);
     const previousPrice = Number(req.body?.previousPrice ?? 12.55);
-    const depth = Number(req.body?.depth ?? 4);
+    const depth = Number(req.body?.depth ?? 3);
 
     if (!Number.isFinite(latestPrice) || latestPrice <= 0) {
       return res.status(400).json({ error: 'latestPrice must be a positive number' });

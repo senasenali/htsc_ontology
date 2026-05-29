@@ -1,7 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
-  Activity,
-  ArrowRight,
   Bot,
   Building2,
   ChevronDown,
@@ -13,16 +11,13 @@ import {
   Flame,
   Link as LinkIcon,
   Loader2,
-  MessageSquare,
   Minus,
   Network,
   Play,
   Plus,
   RefreshCw,
   Search,
-  Send,
   Sparkles,
-  Square,
   Target,
   Database,
   ToggleLeft,
@@ -35,7 +30,6 @@ import {
 import { Button } from '@/src/components/ui/button';
 import { toast } from 'sonner';
 import { api } from '@/src/api/client';
-import { streamResearchChat } from '@/src/api/streamClient';
 import { EventPropagationExplorer } from '@/src/components/EventPropagationExplorer';
 import { cn } from '@/src/lib/utils';
 import { searchStocks, StockItem } from '@/src/data/cnStocks';
@@ -94,21 +88,23 @@ interface AgentAnalysis {
 interface PriceTransmissionSource {
   objectTypeId: string;
   objectTypeName: string;
-  previousPrice: number;
-  latestPrice: number;
-  priceChangePercent: number;
+  previousPrice: number | null;
+  latestPrice: number | null;
+  priceChangePercent: number | null;
 }
 
 interface PriceTransmissionNode {
   id: string;
   name: string;
   subtitle: string;
-  previousPrice: number;
-  latestPrice: number;
-  priceChangePercent: number;
-  changePercent?: number;
+  previousPrice: number | null;
+  latestPrice: number | null;
+  priceChangePercent: number | null;
+  changePercent?: number | null;
   level: string;
   depth: number;
+  dataUnavailable?: boolean;
+  qualitativeNote?: string;
 }
 
 interface PriceTransmissionEdge {
@@ -116,9 +112,11 @@ interface PriceTransmissionEdge {
   target: string;
   linkTypeId?: string;
   linkTypeName?: string;
-  transmissionCoefficient?: number;
-  coefficient: number;
-  impactPercent?: number;
+  transmissionCoefficient?: number | null;
+  coefficient: number | null;
+  impactPercent?: number | null;
+  coefficientType?: string;
+  qualitativeNote?: string;
   label: string;
 }
 
@@ -127,9 +125,9 @@ interface PriceTransmissionPath {
   terminalLinkTypeId: string;
   terminalLinkTypeName: string;
   depth: number;
-  transmissionCoefficient: number;
-  depthDecay: number;
-  impactPercent: number;
+  transmissionCoefficient: number | null;
+  depthDecay: number | null;
+  impactPercent: number | null;
 }
 
 interface PriceTransmissionData {
@@ -398,7 +396,8 @@ function mapBackendAnalysis(raw: any): AgentAnalysis {
   };
 }
 
-function formatSignedNumber(value: number, fractionDigits = 2) {
+function formatSignedNumber(value: number | null | undefined, fractionDigits = 2) {
+  if (value == null) return 'N/A';
   const absValue = Math.abs(value).toFixed(fractionDigits);
   if (value > 0) return `+${absValue}`;
   if (value < 0) return `-${absValue}`;
@@ -412,6 +411,15 @@ function getTransmissionAccent(objectTypeId: string) {
       badge: 'border-cyan-200 bg-cyan-100 text-cyan-700',
       icon: 'bg-cyan-500/10 text-cyan-700',
       line: 'from-cyan-300 via-cyan-200 to-cyan-100',
+    };
+  }
+
+  if (objectTypeId === 'cathode_material') {
+    return {
+      card: 'border-amber-200 bg-amber-50/70 shadow-amber-100/70',
+      badge: 'border-amber-200 bg-amber-100 text-amber-700',
+      icon: 'bg-amber-500/10 text-amber-700',
+      line: 'from-amber-300 via-amber-200 to-amber-100',
     };
   }
 
@@ -430,6 +438,24 @@ function getTransmissionAccent(objectTypeId: string) {
       badge: 'border-violet-200 bg-violet-100 text-violet-700',
       icon: 'bg-violet-500/10 text-violet-700',
       line: 'from-violet-300 via-violet-200 to-violet-100',
+    };
+  }
+
+  if (objectTypeId === 'power_battery') {
+    return {
+      card: 'border-rose-200 bg-rose-50/70 shadow-rose-100/70',
+      badge: 'border-rose-200 bg-rose-100 text-rose-700',
+      icon: 'bg-rose-500/10 text-rose-700',
+      line: 'from-rose-300 via-rose-200 to-rose-100',
+    };
+  }
+
+  if (objectTypeId === 'new_energy_vehicle') {
+    return {
+      card: 'border-blue-200 bg-blue-50/70 shadow-blue-100/70',
+      badge: 'border-blue-200 bg-blue-100 text-blue-700',
+      icon: 'bg-blue-500/10 text-blue-700',
+      line: 'from-blue-300 via-blue-200 to-blue-100',
     };
   }
 
@@ -856,18 +882,13 @@ function EventTimeline({ events }: { events: AgentEvent[] }) {
 function TransmissionNodeCard({
   title,
   subtitle,
-  previousPrice,
-  latestPrice,
   objectTypeId,
 }: {
   title: string;
   subtitle: string;
-  previousPrice: number;
-  latestPrice: number;
   objectTypeId: string;
 }) {
   const accent = getTransmissionAccent(objectTypeId);
-  const priceDisplay = formatTransmissionPrice(previousPrice, latestPrice, objectTypeId);
 
   return (
     <div className={cn('w-full rounded-[26px] border bg-white p-4 shadow-[0_16px_32px_rgba(15,23,42,0.08)]', accent.card)}>
@@ -883,38 +904,43 @@ function TransmissionNodeCard({
           <Network className="h-4 w-4" />
         </div>
       </div>
-
-      <div className="mt-4 rounded-2xl border border-slate-100 bg-slate-50/80 px-3 py-3 text-xs">
-        <p className="text-slate-400">价格变化</p>
-        <div className="mt-2 flex items-center gap-2 text-sm font-semibold text-slate-800">
-          <span>{priceDisplay.previous}</span>
-          <ArrowRight className="h-3.5 w-3.5 text-slate-400" />
-          <span>{priceDisplay.latest}</span>
-        </div>
-        <p className="mt-1 text-[11px] text-slate-400">{priceDisplay.unitLabel}</p>
-      </div>
     </div>
   );
 }
 
-function formatTransmissionPrice(previousPrice: number, latestPrice: number, objectTypeId: string) {
-  const config = (() => {
-    if (objectTypeId === 'lithium_carbonate') return { divisor: 1, unitLabel: '单位：万元 / 吨', decimals: 2 };
-    if (objectTypeId === 'cathode_material') return { divisor: 1, unitLabel: '单位：万元 / 吨', decimals: 2 };
-    if (objectTypeId === 'battery_electrolyte') return { divisor: 1, unitLabel: '单位：万元 / 吨', decimals: 2 };
-    if (objectTypeId === 'battery_cell') return { divisor: 1, unitLabel: '单位：元 / Wh', decimals: 2 };
-    if (objectTypeId === 'power_battery') return { divisor: 10000, unitLabel: '单位：万元 / 套', decimals: 2 };
-    if (objectTypeId === 'new_energy_vehicle') return { divisor: 1, unitLabel: '单位：万元 / 辆', decimals: 2 };
-    return { divisor: 1, unitLabel: '单位：当前表价格口径', decimals: 2 };
-  })();
+function calculateGraphLayout(
+  nodes: PriceTransmissionNode[],
+  opts: { cardWidth: number; cardHeight: number; layerGap: number; nodeGap: number; padding: number },
+): Record<string, { x: number; y: number }> {
+  const { cardWidth, cardHeight, layerGap, nodeGap, padding } = opts;
 
-  const formatValue = (value: number) => (value / config.divisor).toFixed(config.decimals);
+  // 按 depth 分组
+  const byDepth: Record<number, PriceTransmissionNode[]> = {};
+  nodes.forEach((n) => {
+    if (!byDepth[n.depth]) byDepth[n.depth] = [];
+    byDepth[n.depth].push(n);
+  });
 
-  return {
-    previous: formatValue(previousPrice),
-    latest: formatValue(latestPrice),
-    unitLabel: config.unitLabel,
-  };
+  const depths = Object.keys(byDepth)
+    .map(Number)
+    .sort((a, b) => a - b);
+  const maxCount = Math.max(...Object.values(byDepth).map((arr) => arr.length));
+  const totalSpan = maxCount * cardHeight + Math.max(0, maxCount - 1) * nodeGap;
+
+  const positions: Record<string, { x: number; y: number }> = {};
+  depths.forEach((depth) => {
+    const nodesAtDepth = byDepth[depth];
+    const count = nodesAtDepth.length;
+    const layerSpan = count * cardHeight + Math.max(0, count - 1) * nodeGap;
+    const startY = padding + (totalSpan - layerSpan) / 2;
+    const x = padding + depth * (cardWidth + layerGap);
+
+    nodesAtDepth.forEach((node, i) => {
+      positions[node.id] = { x, y: startY + i * (cardHeight + nodeGap) };
+    });
+  });
+
+  return positions;
 }
 
 function PriceTransmissionGraph({ data }: { data: PriceTransmissionData }) {
@@ -926,76 +952,96 @@ function PriceTransmissionGraph({ data }: { data: PriceTransmissionData }) {
     );
   }
 
-  const nodePositions: Record<string, { x: number; y: number }> = {
-    lithium_carbonate: { x: 80, y: 170 },
-    cathode_material: { x: 350, y: 40 },
-    battery_electrolyte: { x: 350, y: 290 },
-    battery_cell: { x: 650, y: 170 },
-    power_battery: { x: 930, y: 170 },
-    new_energy_vehicle: { x: 1210, y: 170 },
-  };
+  const CARD_W = 220;
+  const CARD_H = 128;
+  const maxEdgeLabel = Math.max(...(data.edges.map((e) => e.label?.length ?? 0)), 0);
+  const LAYER_GAP = Math.max(maxEdgeLabel * 8, 100);
+  const NODE_GAP = 40;
+  const PADDING = 60;
 
-  const chainNodes = data.nodes.map((node) => ({
-    ...node,
-    objectTypeId: node.id,
-    x: nodePositions[node.id]?.x ?? 80,
-    y: nodePositions[node.id]?.y ?? 170,
-    title: node.name,
-  }));
+  const positions = calculateGraphLayout(data.nodes, {
+    cardWidth: CARD_W,
+    cardHeight: CARD_H,
+    layerGap: LAYER_GAP,
+    nodeGap: NODE_GAP,
+    padding: PADDING,
+  });
+
+  const chainNodes = data.nodes.map((node) => {
+    const pos = positions[node.id] ?? { x: PADDING, y: PADDING };
+    return { ...node, objectTypeId: node.id, x: pos.x, y: pos.y, title: node.name };
+  });
 
   const edges = data.edges.map((edge) => ({
     from: edge.source,
     to: edge.target,
     label: edge.label,
   }));
-  const CARD_WIDTH = 220;
-  const CARD_HEIGHT = 128;
-  const CANVAS_WIDTH = 1450;
-  const CANVAS_HEIGHT = 470;
+
+  const maxX = Math.max(...chainNodes.map((n) => n.x + CARD_W), PADDING);
+  const maxY = Math.max(...chainNodes.map((n) => n.y + CARD_H), PADDING);
+  const CANVAS_W = maxX + PADDING;
+  const CANVAS_H = maxY + PADDING;
+
   const nodeById = Object.fromEntries(chainNodes.map((node) => [node.id, node]));
 
+  // 贝塞尔曲线路径
   const buildPath = (fromId: string, toId: string) => {
     const from = nodeById[fromId];
     const to = nodeById[toId];
-    const x1 = from.x + CARD_WIDTH;
-    const y1 = from.y + CARD_HEIGHT / 2;
+    if (!from || !to) return '';
+    const x1 = from.x + CARD_W;
+    const y1 = from.y + CARD_H / 2;
     const x2 = to.x;
-    const y2 = to.y + CARD_HEIGHT / 2;
+    const y2 = to.y + CARD_H / 2;
     const dx = x2 - x1;
     const c1x = x1 + dx * 0.4;
     const c2x = x2 - dx * 0.4;
     return `M ${x1} ${y1} C ${c1x} ${y1}, ${c2x} ${y2}, ${x2} ${y2}`;
   };
 
-  const labelPosition = (fromId: string, toId: string, offsetY = -14) => {
+  // 标签位置（贝塞尔曲线中点）
+  const labelPosition = (fromId: string, toId: string, offsetY = -16) => {
     const from = nodeById[fromId];
     const to = nodeById[toId];
-    const x1 = from.x + CARD_WIDTH;
-    const y1 = from.y + CARD_HEIGHT / 2;
+    if (!from || !to) return { x: 0, y: 0 };
+    const x1 = from.x + CARD_W;
+    const y1 = from.y + CARD_H / 2;
     const x2 = to.x;
-    const y2 = to.y + CARD_HEIGHT / 2;
-    return {
-      x: (x1 + x2) / 2,
-      y: (y1 + y2) / 2 + offsetY,
-    };
+    const y2 = to.y + CARD_H / 2;
+    // 贝塞尔 t=0.5 近似中点
+    const mx = (x1 + x2) / 2;
+    // 三次贝塞尔: B(0.5) = 1/8*y1 + 3/8*y1 + 3/8*y2 + 1/8*y2 = (y1+y2)/2
+    // 因为控制点 y 分别为 y1 和 y2
+    const my = (y1 + y2) / 2;
+    return { x: mx, y: my + offsetY };
   };
 
+  // 根据源节点类型取连线颜色
   const edgeColor = (fromId: string) => {
-    return getTransmissionAccent(nodeById[fromId].objectTypeId).badge.includes('emerald')
-      ? '#4ade80'
-      : getTransmissionAccent(nodeById[fromId].objectTypeId).badge.includes('violet')
-        ? '#a78bfa'
-        : getTransmissionAccent(nodeById[fromId].objectTypeId).badge.includes('cyan')
-          ? '#67e8f9'
-          : '#93c5fd';
+    const accent = nodeById[fromId]?.objectTypeId;
+    const cls = getTransmissionAccent(accent).badge;
+    if (cls.includes('emerald')) return '#4ade80';
+    if (cls.includes('violet')) return '#a78bfa';
+    if (cls.includes('cyan')) return '#67e8f9';
+    return '#93c5fd';
   };
+
+  // 空节点列表处理
+  if (chainNodes.length === 0) {
+    return (
+      <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-6 text-sm text-slate-500">
+        当前没有可展示的传导节点。
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-5 rounded-[28px] border border-slate-200 bg-[radial-gradient(circle_at_top,_rgba(59,130,246,0.08),_transparent_45%),linear-gradient(180deg,_#f8fbff_0%,_#ffffff_100%)] p-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h5 className="text-sm font-semibold text-slate-900">概念层价格传导分析</h5>
-            <p className="mt-1 text-xs text-slate-500">以本体图谱风格展示源概念价格变化如何沿概念关系逐级传导。</p>
+          <p className="mt-1 text-xs text-slate-500">以本体图谱风格展示源概念价格变化如何沿概念关系逐级传导。</p>
         </div>
         <div className="flex gap-2">
           <div className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-right shadow-sm">
@@ -1004,35 +1050,38 @@ function PriceTransmissionGraph({ data }: { data: PriceTransmissionData }) {
           </div>
           <div className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-right shadow-sm">
             <p className="text-[11px] text-slate-400">源头涨幅</p>
-            <p className="text-sm font-semibold text-red-600">{formatSignedNumber(data.sourceObjectType.priceChangePercent)}%</p>
+            {data.sourceObjectType.priceChangePercent != null ? (
+              <p className="text-sm font-semibold text-red-600">{formatSignedNumber(data.sourceObjectType.priceChangePercent)}%</p>
+            ) : (
+              <p className="text-sm font-medium text-slate-400">定性</p>
+            )}
           </div>
         </div>
       </div>
 
-      <div className="overflow-x-auto rounded-[28px] border border-slate-200 bg-[radial-gradient(circle_at_top,_rgba(148,163,184,0.12),_transparent_55%),#f8fafc] p-6">
-        <div className="relative" style={{ width: `${CANVAS_WIDTH}px`, height: `${CANVAS_HEIGHT}px` }}>
-          <svg className="absolute inset-0 h-full w-full" viewBox={`0 0 ${CANVAS_WIDTH} ${CANVAS_HEIGHT}`} fill="none">
+      <div className="overflow-auto rounded-[28px] border border-slate-200 bg-[radial-gradient(circle_at_top,_rgba(148,163,184,0.12),_transparent_55%),#f8fafc] p-6">
+        <div className="relative" style={{ width: `${CANVAS_W}px`, height: `${CANVAS_H}px` }}>
+          <svg className="absolute inset-0 h-full w-full" viewBox={`0 0 ${CANVAS_W} ${CANVAS_H}`} fill="none">
             {edges.map((edge) => {
               const color = edgeColor(edge.from);
               const label = labelPosition(edge.from, edge.to);
+              const labelText = edge.label;
+              const estW = Math.max(labelText.length * 8, 40);
+              const halfW = estW / 2;
               return (
                 <g key={`${edge.from}-${edge.to}`}>
                   <path d={buildPath(edge.from, edge.to)} stroke={color} strokeWidth="12" strokeLinecap="round" strokeOpacity="0.16" />
                   <path d={buildPath(edge.from, edge.to)} stroke={color} strokeWidth="2.5" strokeLinecap="round" strokeDasharray="7 7" />
-                  <g transform={`translate(${label.x}, ${label.y}) rotate(-20)`}>
-                    <rect x="-54" y="-12" width="108" height="24" rx="12" fill="white" fillOpacity="0.95" stroke="#e2e8f0" />
+                  <g transform={`translate(${label.x}, ${label.y})`}>
+                    <rect x={-halfW} y="-12" width={estW} height="24" rx="12" fill="white" fillOpacity="0.95" stroke="#e2e8f0" />
                     <text textAnchor="middle" dominantBaseline="middle" fontSize="11" fontWeight="700" fill="#64748b">
-                      {edge.label}
+                      {labelText}
                     </text>
                   </g>
                 </g>
               );
             })}
           </svg>
-
-          {edges.map((edge) => {
-            return null;
-          })}
 
           {chainNodes.map((node) => (
             <div
@@ -1041,23 +1090,199 @@ function PriceTransmissionGraph({ data }: { data: PriceTransmissionData }) {
               style={{
                 left: `${node.x}px`,
                 top: `${node.y}px`,
-                width: `${CARD_WIDTH}px`,
+                width: `${CARD_W}px`,
               }}
             >
-                <TransmissionNodeCard
-                  title={node.title}
-                  subtitle={node.subtitle}
-                  previousPrice={node.previousPrice}
-                  latestPrice={node.latestPrice}
-                  objectTypeId={node.objectTypeId}
-                />
+              <TransmissionNodeCard
+                title={node.title}
+                subtitle={node.subtitle}
+                objectTypeId={node.objectTypeId}
+              />
             </div>
           ))}
 
-          <div className="mt-6 flex items-center justify-between px-2 text-[11px] text-slate-400">
+          <div className="absolute bottom-0 left-0 right-0 flex items-center justify-between px-2 text-[11px] text-slate-400">
             <span>概念层价格冲击沿 link type 关系逐级扩散。</span>
             <span>传导系数来自概念层价格传导分析函数输出。</span>
           </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ImpactChainGraph({ items }: { items: ImpactChainItem[] }) {
+  if (!items.length) return null;
+
+  const CARD_W = 170;
+  const CARD_H = 52;
+  const maxLabelLen = Math.max(...items.map((i) => i.mechanism.length));
+  const LAYER_GAP = Math.max(maxLabelLen * 11, 100);
+  const NODE_GAP = 28;
+  const PADDING = 50;
+
+  // Collect unique node names
+  const nodeNames = Array.from(new Set(items.flatMap((i) => [i.from, i.to])));
+
+  // Assign depths by walking chain
+  const nodeDepths: Record<string, number> = {};
+  let changed = true;
+  while (changed) {
+    changed = false;
+    // Seed source nodes (only from, never to)
+    const fromSet = new Set(items.map((i) => i.from));
+    const toSet = new Set(items.map((i) => i.to));
+    nodeNames.forEach((name) => {
+      if (fromSet.has(name) && !toSet.has(name) && nodeDepths[name] === undefined) {
+        nodeDepths[name] = 0;
+        changed = true;
+      }
+    });
+    // Propagate depths
+    items.forEach((item) => {
+      if (nodeDepths[item.from] !== undefined) {
+        const newDepth = nodeDepths[item.from] + 1;
+        if (nodeDepths[item.to] === undefined || newDepth > nodeDepths[item.to]) {
+          nodeDepths[item.to] = newDepth;
+          changed = true;
+        }
+      }
+    });
+  }
+
+  // Build layout-compatible nodes
+  const layoutInput: PriceTransmissionNode[] = nodeNames.map((name) => ({
+    id: name,
+    name,
+    subtitle: '',
+    previousPrice: null as number | null,
+    latestPrice: null as number | null,
+    level: '',
+    changePercent: null as number | null,
+    priceChangePercent: null as number | null,
+    depth: nodeDepths[name] ?? 0,
+  }));
+
+  const positions = calculateGraphLayout(layoutInput, {
+    cardWidth: CARD_W,
+    cardHeight: CARD_H,
+    layerGap: LAYER_GAP,
+    nodeGap: NODE_GAP,
+    padding: PADDING,
+  });
+
+  const chainNodes = nodeNames.map((name) => ({
+    id: name,
+    name,
+    depth: nodeDepths[name] ?? 0,
+    x: positions[name]?.x ?? PADDING,
+    y: positions[name]?.y ?? PADDING,
+  }));
+  const nodeById = Object.fromEntries(chainNodes.map((n) => [n.id, n]));
+
+  const intensityColor: Record<string, string> = {
+    high: '#f43f5e',
+    medium: '#f59e0b',
+    low: '#94a3b8',
+  };
+
+  // Node accent by role
+  const nodeAccent = (id: string): { card: string; badge: string } => {
+    const isSource = !items.some((i) => i.to === id);
+    const isLeaf = !items.some((i) => i.from === id);
+    if (isSource) return { card: 'border-cyan-200 bg-cyan-50/70 shadow-cyan-100/70', badge: 'border-cyan-200 bg-cyan-100 text-cyan-700' };
+    if (isLeaf) return { card: 'border-blue-200 bg-blue-50/70 shadow-blue-100/70', badge: 'border-blue-200 bg-blue-100 text-blue-700' };
+    return { card: 'border-violet-200 bg-violet-50/70 shadow-violet-100/70', badge: 'border-violet-200 bg-violet-100 text-violet-700' };
+  };
+
+  const maxX = Math.max(...chainNodes.map((n) => n.x + CARD_W), PADDING);
+  const maxY = Math.max(...chainNodes.map((n) => n.y + CARD_H), PADDING);
+  const CANVAS_W = maxX + PADDING;
+  const CANVAS_H = maxY + PADDING;
+
+  const buildPath = (fromId: string, toId: string) => {
+    const from = nodeById[fromId];
+    const to = nodeById[toId];
+    if (!from || !to) return '';
+    const x1 = from.x + CARD_W;
+    const y1 = from.y + CARD_H / 2;
+    const x2 = to.x;
+    const y2 = to.y + CARD_H / 2;
+    const dx = x2 - x1;
+    return `M ${x1} ${y1} C ${x1 + dx * 0.4} ${y1}, ${x2 - dx * 0.4} ${y2}, ${x2} ${y2}`;
+  };
+
+  const labelMid = (fromId: string, toId: string) => {
+    const from = nodeById[fromId];
+    const to = nodeById[toId];
+    if (!from || !to) return { x: 0, y: 0 };
+    return { x: (from.x + CARD_W + to.x) / 2, y: (from.y + CARD_H / 2 + to.y + CARD_H / 2) / 2 - 14 };
+  };
+
+  return (
+    <div className="space-y-4 rounded-[28px] border border-slate-200 bg-[radial-gradient(circle_at_top,_rgba(59,130,246,0.08),_transparent_45%),linear-gradient(180deg,_#f8fbff_0%,_#ffffff_100%)] p-5">
+      <div className="flex items-center justify-between">
+        <div>
+          <h5 className="text-sm font-semibold text-slate-900">影响链路</h5>
+          <p className="mt-1 text-xs text-slate-500">节点间的影响传导关系。</p>
+        </div>
+        <div className="flex gap-3 text-[11px] text-slate-400">
+          <span className="flex items-center gap-1">
+            <span className="inline-block h-2 w-2 rounded-full bg-rose-400" />
+            强影响
+          </span>
+          <span className="flex items-center gap-1">
+            <span className="inline-block h-2 w-2 rounded-full bg-amber-400" />
+            中影响
+          </span>
+          <span className="flex items-center gap-1">
+            <span className="inline-block h-2 w-2 rounded-full bg-slate-300" />
+            弱影响
+          </span>
+        </div>
+      </div>
+
+      <div className="overflow-auto rounded-[28px] border border-slate-200 bg-[radial-gradient(circle_at_top,_rgba(148,163,184,0.12),_transparent_55%),#f8fafc] p-6">
+        <div className="relative" style={{ width: `${CANVAS_W}px`, height: `${CANVAS_H}px` }}>
+          <svg className="absolute inset-0 h-full w-full" viewBox={`0 0 ${CANVAS_W} ${CANVAS_H}`} fill="none">
+            {items.map((item, idx) => {
+              const color = intensityColor[item.intensity] || intensityColor.low;
+              const label = labelMid(item.from, item.to);
+              const labelText = item.mechanism;
+              const estW = Math.max(labelText.length * 11, 30);
+              const halfW = estW / 2;
+              return (
+                <g key={`${item.from}-${item.to}-${idx}`}>
+                  <path d={buildPath(item.from, item.to)} stroke={color} strokeWidth="10" strokeLinecap="round" strokeOpacity="0.12" />
+                  <path d={buildPath(item.from, item.to)} stroke={color} strokeWidth="2" strokeLinecap="round" strokeDasharray="16 10" />
+                  <g transform={`translate(${label.x}, ${label.y})`}>
+                    <rect x={-halfW} y="-12" width={estW} height="24" rx="12" fill="white" fillOpacity="0.95" stroke="#e2e8f0" />
+                    <text textAnchor="middle" dominantBaseline="middle" fontSize="11" fontWeight="700" fill="#64748b">
+                      {labelText}
+                    </text>
+                  </g>
+                </g>
+              );
+            })}
+          </svg>
+
+          {chainNodes.map((node) => {
+            const accent = nodeAccent(node.id);
+            return (
+              <div
+                key={node.id}
+                className="absolute z-10"
+                style={{ left: `${node.x}px`, top: `${node.y}px`, width: `${CARD_W}px` }}
+              >
+                <div className={cn('w-full rounded-[18px] border bg-white px-3 py-2.5 shadow-[0_8px_16px_rgba(15,23,42,0.06)]', accent.card)}>
+                  <div className={cn('inline-flex items-center gap-1 rounded-full border px-1.5 py-0.5 text-[10px] font-medium', accent.badge)}>
+                    L{(node.depth ?? 0) + 1}
+                  </div>
+                  <p className="mt-1 text-xs font-semibold text-slate-900 truncate">{node.name}</p>
+                </div>
+              </div>
+            );
+          })}
         </div>
       </div>
     </div>
@@ -1126,31 +1351,10 @@ function AnalysisReport({
 
           {analysis.transmissionData ? (
             <div>
-              <h4 className="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-slate-500">
-                <Activity className="h-3.5 w-3.5 text-purple-500" />
-                影响链路
-              </h4>
               <PriceTransmissionGraph data={analysis.transmissionData} />
             </div>
           ) : analysis.impact_chain.length > 0 ? (
-            <div>
-              <h4 className="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-slate-500">
-                <Activity className="h-3.5 w-3.5 text-purple-500" />
-                影响链路
-              </h4>
-              <div className="flex flex-wrap gap-2">
-                {analysis.impact_chain.map((item, index) => (
-                  <div key={`${item.from}-${item.to}-${index}`} className="flex items-center gap-1 text-xs">
-                    <span className="rounded border border-blue-100 bg-blue-50 px-2 py-1 font-medium text-blue-700">{item.from}</span>
-                    <div className="flex flex-col items-center">
-                      <ArrowRight className="h-3.5 w-3.5 text-slate-400" />
-                      <span className={cn('rounded px-1 text-[9px]', impactColors[item.intensity])}>{item.mechanism}</span>
-                    </div>
-                    <span className="rounded border border-emerald-100 bg-emerald-50 px-2 py-1 font-medium text-emerald-700">{item.to}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
+            <ImpactChainGraph items={analysis.impact_chain} />
           ) : null}
 
           {analysis.recommendation ? (
@@ -1495,11 +1699,7 @@ function HotEventInterpretationPanel() {
               </div>
             ) : null}
 
-            <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-              <div className="mb-4 flex items-center gap-2 font-semibold text-slate-900">
-                <Activity className="h-4 w-4 text-purple-500" />
-                事件传导图
-              </div>
+            <div>
               <EventPropagationExplorer
                 eventTitle={selectedEvent.title}
                 relationCandidate={selectedEvent.candidate || null}
@@ -1519,242 +1719,6 @@ function HotEventInterpretationPanel() {
   );
 }
 
-const QA_STORAGE_KEY = 'ontology_qa_history';
-
-interface QAMessage {
-  role: 'user' | 'assistant';
-  text: string;
-  sources?: { uri: string; title: string }[];
-  chain?: { step: number; from: string; to: string; mechanism: string; impact: string }[];
-  entities?: string[];
-  streaming?: boolean;
-}
-
-function loadQAMessages(): QAMessage[] {
-  try {
-    const raw = localStorage.getItem(QA_STORAGE_KEY);
-    return raw ? JSON.parse(raw) : [];
-  } catch {
-    return [];
-  }
-}
-
-function saveQAMessages(messages: QAMessage[]) {
-  try {
-    localStorage.setItem(QA_STORAGE_KEY, JSON.stringify(messages));
-  } catch {
-    // ignore
-  }
-}
-
-export function OntologyQAPanel({ fallbackAgentId }: { fallbackAgentId?: string }) {
-  const [input, setInput] = useState('');
-  const [messages, setMessages] = useState<QAMessage[]>(loadQAMessages);
-  const [loading, setLoading] = useState(false);
-  const [agentId, setAgentId] = useState<string | null>(fallbackAgentId || null);
-  const abortRef = useRef<AbortController | null>(null);
-  const endRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    endRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages, loading]);
-
-  useEffect(() => {
-    api
-      .getResearchAgents()
-      .then((result) => {
-        if (result.agents?.length) {
-          setAgentId(result.agents[0].id);
-        } else if (fallbackAgentId) {
-          setAgentId(fallbackAgentId);
-        }
-      })
-      .catch(() => {
-        if (fallbackAgentId) setAgentId(fallbackAgentId);
-      });
-  }, [fallbackAgentId]);
-
-  const SUGGESTIONS = [
-    '新能源车原材料价格上涨，对产业链上下游企业业绩和股价有何影响？',
-    '碳酸锂价格大幅下跌，哪些环节最受益，哪些最受损？',
-    '光伏组件价格持续下跌，对整个光伏产业链估值有何重塑？',
-    '半导体设备国产替代进展如何？对相关标的有何影响？',
-  ];
-
-  const addMessages = (updater: (prev: QAMessage[]) => QAMessage[]) => {
-    setMessages((prev) => {
-      const next = updater(prev);
-      saveQAMessages(next);
-      return next;
-    });
-  };
-
-  const send = async (nextQuestion?: string) => {
-    const question = (nextQuestion || input).trim();
-    if (!question || loading) return;
-    if (!agentId) {
-      toast.error('当前没有可用的问答上下文');
-      return;
-    }
-
-    setInput('');
-    addMessages((prev) => [...prev, { role: 'user', text: question }]);
-    setLoading(true);
-    abortRef.current = new AbortController();
-
-    try {
-      let fullResponse = '';
-      addMessages((prev) => [...prev, { role: 'assistant', text: '', streaming: true }]);
-
-      for await (const chunk of streamResearchChat(agentId, question)) {
-        if (abortRef.current?.signal.aborted) break;
-        if (chunk.error) throw new Error(chunk.error);
-
-        if (chunk.content) {
-          fullResponse += chunk.content;
-          addMessages((prev) => {
-            const next = [...prev];
-            const last = next[next.length - 1];
-            if (last && last.role === 'assistant' && last.streaming) {
-              last.text = fullResponse;
-            }
-            return next;
-          });
-        }
-
-        if (chunk.done) break;
-      }
-
-      addMessages((prev) => {
-        const next = [...prev];
-        const last = next[next.length - 1];
-        if (last && last.role === 'assistant') {
-          last.streaming = false;
-          last.text = fullResponse;
-        }
-        return next;
-      });
-    } catch (error: any) {
-      if (error.name !== 'AbortError') {
-        addMessages((prev) => [...prev, { role: 'assistant', text: `出错了：${error.message}` }]);
-      }
-    } finally {
-      setLoading(false);
-      abortRef.current = null;
-    }
-  };
-
-  const stop = () => {
-    abortRef.current?.abort();
-    setLoading(false);
-  };
-
-  const clearHistory = () => {
-    addMessages(() => []);
-    toast.success('对话历史已清空');
-  };
-
-  return (
-    <div className="flex h-full flex-col">
-      <div className="flex shrink-0 items-center justify-between border-b border-slate-200 bg-gradient-to-r from-blue-50 to-white px-5 py-3">
-        <div>
-          <h3 className="flex items-center gap-2 font-semibold text-slate-900">
-            <Network className="h-4 w-4 text-blue-600" />
-            产业图谱智能问答
-          </h3>
-          <p className="mt-0.5 text-xs text-slate-500">基于本体图谱逻辑 + 实时市场数据，回答产业链开放性问题</p>
-        </div>
-        {messages.length > 0 ? (
-          <button
-            onClick={clearHistory}
-            className="flex items-center gap-1 rounded px-2 py-1 text-xs text-slate-400 transition-colors hover:bg-red-50 hover:text-red-500"
-          >
-            <Trash2 className="h-3 w-3" />
-            清空
-          </button>
-        ) : null}
-      </div>
-
-      <div className="flex-1 space-y-4 overflow-y-auto p-4">
-        {messages.length === 0 ? (
-          <div className="space-y-3">
-            <p className="py-4 text-center text-xs text-slate-400">选择一个问题开始，或自己输入</p>
-            {SUGGESTIONS.map((suggestion) => (
-              <button
-                key={suggestion}
-                onClick={() => send(suggestion)}
-                className="w-full rounded-lg border border-slate-200 bg-white px-4 py-3 text-left text-sm text-slate-700 transition-colors hover:border-blue-300 hover:bg-blue-50"
-              >
-                {suggestion}
-              </button>
-            ))}
-          </div>
-        ) : null}
-
-        {messages.map((message, index) => (
-          <div key={`${message.role}-${index}`} className={cn('flex gap-3', message.role === 'user' ? 'flex-row-reverse' : 'flex-row')}>
-            <div
-              className={cn(
-                'flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-bold',
-                message.role === 'user' ? 'bg-blue-600 text-white' : 'bg-gradient-to-br from-purple-500 to-blue-600 text-white',
-              )}
-            >
-              {message.role === 'user' ? 'U' : 'AI'}
-            </div>
-            <div className={cn('flex max-w-[85%] flex-1', message.role === 'user' ? 'justify-end' : 'justify-start')}>
-              <div
-                className={cn(
-                  'rounded-xl px-4 py-3 text-sm',
-                  message.role === 'user' ? 'bg-blue-600 text-white' : 'border border-slate-200 bg-white text-slate-800',
-                )}
-              >
-                <div className="whitespace-pre-wrap leading-relaxed">{message.text}</div>
-              </div>
-            </div>
-          </div>
-        ))}
-
-        {loading ? (
-          <div className="flex gap-3">
-            <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-purple-500 to-blue-600 text-xs font-bold text-white">AI</div>
-            <div className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-3">
-              <Loader2 className="h-3.5 w-3.5 animate-spin text-blue-500" />
-              <span className="text-sm text-slate-500">正在搜索和分析...</span>
-            </div>
-          </div>
-        ) : null}
-        <div ref={endRef} />
-      </div>
-
-      <div className="shrink-0 border-t border-slate-200 p-3">
-        <div className="flex gap-2">
-          <input
-            className="h-10 flex-1 rounded-lg border border-slate-200 px-3 text-sm outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
-            placeholder="输入产业链相关问题..."
-            value={input}
-            onChange={(event) => setInput(event.target.value)}
-            onKeyDown={(event) => {
-              if (event.key === 'Enter' && !event.shiftKey) send();
-            }}
-            disabled={loading}
-          />
-          {loading ? (
-            <Button size="sm" variant="outline" onClick={stop} className="h-10 gap-1.5 border-red-200 text-red-600 hover:bg-red-50">
-              <Square className="h-3.5 w-3.5" />
-              停止
-            </Button>
-          ) : (
-            <Button size="sm" onClick={() => send()} disabled={!input.trim()} className="h-10 gap-1.5">
-              <Send className="h-3.5 w-3.5" />
-              发送
-            </Button>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-}
-
 export function AgentStudio() {
   const [agents, setAgents] = useState<Agent[]>([]);
   const [eventsByAgent, setEventsByAgent] = useState<Record<string, AgentEvent[]>>({});
@@ -1763,7 +1727,7 @@ export function AgentStudio() {
   const [showCreate, setShowCreate] = useState(false);
   const [running, setRunning] = useState<string | null>(null);
   const [detailTab, setDetailTab] = useState<'events' | 'analyses'>('analyses');
-  const [mainTab, setMainTab] = useState<'agents' | 'hot' | 'qa'>('agents');
+  const [mainTab, setMainTab] = useState<'agents' | 'hot'>('agents');
   const [manualLithiumPrice, setManualLithiumPrice] = useState('20.00');
   const [manualGenerating, setManualGenerating] = useState(false);
   const [deletingAnalysisId, setDeletingAnalysisId] = useState<string | null>(null);
@@ -1937,7 +1901,7 @@ export function AgentStudio() {
       await api.createManualLithiumAnalysis(DEMO_LITHIUM_AGENT_ID, {
         previousPrice: MANUAL_LITHIUM_BASE_PRICE,
         latestPrice,
-        depth: 4,
+        depth: 3,
       });
 
       const analysesResult = await api.getAgentAnalyses(DEMO_LITHIUM_AGENT_ID);
@@ -1999,24 +1963,10 @@ export function AgentStudio() {
           <Flame className="h-4 w-4" />
           事件跟踪
         </button>
-        <button
-          onClick={() => setMainTab('qa')}
-          className={cn(
-            'flex items-center gap-2 border-b-2 px-4 py-3 text-sm font-medium transition-colors',
-            mainTab === 'qa' ? 'border-blue-600 text-blue-700' : 'border-transparent text-slate-500 hover:text-slate-700',
-          )}
-        >
-          <MessageSquare className="h-4 w-4" />
-          产业链智能问答
-        </button>
       </div>
 
       <div className={cn('flex-1 min-h-0', mainTab !== 'hot' && 'hidden')}>
         <HotEventInterpretationPanel />
-      </div>
-
-      <div className={cn('flex-1 min-h-0', mainTab !== 'qa' && 'hidden')}>
-        <OntologyQAPanel fallbackAgentId={agents[0]?.id} />
       </div>
 
       <div className={cn('flex min-h-0 flex-1 gap-6 p-6', mainTab !== 'agents' && 'hidden')}>

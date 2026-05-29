@@ -81,7 +81,7 @@ public class PriceTransmissionController {
         );
         String direction = firstNonBlank((String) request.get("direction"), "downstream");
 
-        Integer depth = 4;
+        Integer depth = 3;
         Object depthObj = request.get("depth");
         if (depthObj != null) {
             if (depthObj instanceof Number) {

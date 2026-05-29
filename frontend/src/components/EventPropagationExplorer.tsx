@@ -116,8 +116,8 @@ type RelationCandidate = {
   evidence?: string;
 };
 
-const NODE_WIDTH = 120;
-const NODE_HEIGHT = 48;
+const NODE_WIDTH = 130;
+const NODE_HEIGHT = 56;
 
 function normalize(value: string) {
   return String(value || '')
@@ -294,6 +294,9 @@ function renderNode(
   const titleY = node.y - 4;
   const typeStartY = node.y + 15;
 
+  // Derive a lighter fill from the stroke color for the card
+  const cardFill = node.fill !== '#ffffff' ? node.fill : undefined;
+
   return (
     <g key={node.id}>
       <rect
@@ -302,23 +305,23 @@ function renderNode(
         width={NODE_WIDTH}
         height={NODE_HEIGHT}
         rx={12}
-        fill="#ffffff"
+        fill={cardFill || '#ffffff'}
         stroke={node.stroke}
         strokeWidth={2}
         filter="url(#nodeShadow)"
       />
 
-      <text x={node.x} y={titleY} textAnchor="middle" fontSize="14" fontWeight={700} fill="#0f172a">
+      <text x={node.x} y={titleY} textAnchor="middle" fontSize="13" fontWeight={700} fill="#0f172a">
         {labelLines.map((line, index) => (
-          <tspan key={`${node.id}-label-${index}`} x={node.x} dy={index === 0 ? 0 : 16}>
+          <tspan key={`${node.id}-label-${index}`} x={node.x} dy={index === 0 ? 0 : 15}>
             {line}
           </tspan>
         ))}
       </text>
 
-      <text x={node.x} y={typeStartY} textAnchor="middle" fontSize="10.5" fill="#64748b">
+      <text x={node.x} y={typeStartY} textAnchor="middle" fontSize="10" fontWeight={600} fill="#64748b">
         {typeLines.map((line, index) => (
-          <tspan key={`${node.id}-type-${index}`} x={node.x} dy={index === 0 ? 0 : 14}>
+          <tspan key={`${node.id}-type-${index}`} x={node.x} dy={index === 0 ? 0 : 13}>
             {line}
           </tspan>
         ))}
@@ -411,8 +414,8 @@ function buildScenario(eventTitle: string): DemoScenario | null {
         x: 24,
         y: 165,
         width: 210,
-        fill: '#eef2ff',
-        stroke: '#6366f1',
+        fill: '#ecfeff',
+        stroke: '#06b6d4',
       }),
       makeSankeyNode({
         id: center.id,
@@ -422,8 +425,8 @@ function buildScenario(eventTitle: string): DemoScenario | null {
         x: 270,
         y: 165,
         width: 190,
-        fill: '#ecfeff',
-        stroke: '#06b6d4',
+        fill: '#f5f3ff',
+        stroke: '#8b5cf6',
         showInstancesInNode: false,
       }),
       ...upstream.map((node, index) =>
@@ -435,8 +438,8 @@ function buildScenario(eventTitle: string): DemoScenario | null {
           x: 520 + index * 150,
           y: 72 + index * 44,
           width: 150,
-          fill: '#ffffff',
-          stroke: '#93c5fd',
+          fill: '#fffbeb',
+          stroke: '#f59e0b',
           showInstancesInNode: false,
         }),
       ),
@@ -449,21 +452,21 @@ function buildScenario(eventTitle: string): DemoScenario | null {
           x: 520 + index * 150,
           y: 285 + index * 48,
           width: 150,
-          fill: '#ffffff',
-          stroke: '#86efac',
+          fill: '#ecfdf5',
+          stroke: '#10b981',
           showInstancesInNode: false,
         }),
       ),
     ];
 
     const links: SankeyLink[] = [
-      makeLink('event', center.id, '命中充电桩', 1.1, '#6366f1'),
-      makeLink(center.id, upstream[0]?.id || center.id, findRelationLabel(center, upstream[0]?.name || ''), 1, '#22c55e'),
-      makeLink(upstream[0]?.id || center.id, upstream[1]?.id || center.id, findRelationLabel(upstream[0] || center, upstream[1]?.name || ''), 0.92, '#22c55e'),
-      makeLink(upstream[1]?.id || center.id, upstream[2]?.id || center.id, findRelationLabel(upstream[1] || center, upstream[2]?.name || ''), 0.88, '#22c55e'),
-      makeLink(upstream[2]?.id || center.id, upstream[3]?.id || center.id, findRelationLabel(upstream[2] || center, upstream[3]?.name || ''), 0.82, '#22c55e'),
-      makeLink(center.id, downstream[0]?.id || center.id, findRelationLabel(center, downstream[0]?.name || ''), 1, '#16a34a'),
-      makeLink(downstream[0]?.id || center.id, downstream[1]?.id || center.id, findRelationLabel(downstream[0] || center, downstream[1]?.name || ''), 0.85, '#16a34a'),
+      makeLink('event', center.id, '命中充电桩', 1.1, '#06b6d4'),
+      makeLink(center.id, upstream[0]?.id || center.id, findRelationLabel(center, upstream[0]?.name || ''), 1, '#f59e0b'),
+      makeLink(upstream[0]?.id || center.id, upstream[1]?.id || center.id, findRelationLabel(upstream[0] || center, upstream[1]?.name || ''), 0.92, '#f59e0b'),
+      makeLink(upstream[1]?.id || center.id, upstream[2]?.id || center.id, findRelationLabel(upstream[1] || center, upstream[2]?.name || ''), 0.88, '#f59e0b'),
+      makeLink(upstream[2]?.id || center.id, upstream[3]?.id || center.id, findRelationLabel(upstream[2] || center, upstream[3]?.name || ''), 0.82, '#f59e0b'),
+      makeLink(center.id, downstream[0]?.id || center.id, findRelationLabel(center, downstream[0]?.name || ''), 1, '#10b981'),
+      makeLink(downstream[0]?.id || center.id, downstream[1]?.id || center.id, findRelationLabel(downstream[0] || center, downstream[1]?.name || ''), 0.85, '#10b981'),
     ];
 
     return {
@@ -498,8 +501,8 @@ function buildScenario(eventTitle: string): DemoScenario | null {
         x: 20,
         y: 168,
         width: 200,
-        fill: '#eef2ff',
-        stroke: '#6366f1',
+        fill: '#ecfeff',
+        stroke: '#06b6d4',
         showInstancesInNode: false,
       }),
       makeSankeyNode({
@@ -510,8 +513,8 @@ function buildScenario(eventTitle: string): DemoScenario | null {
         x: 250,
         y: 162,
         width: 170,
-        fill: '#f0fdf4',
-        stroke: '#22c55e',
+        fill: '#ecfeff',
+        stroke: '#06b6d4',
         meta: '原材料层',
       }),
       makeSankeyNode({
@@ -522,8 +525,8 @@ function buildScenario(eventTitle: string): DemoScenario | null {
         x: 470,
         y: 80,
         width: 170,
-        fill: '#fff7ed',
-        stroke: '#fb923c',
+        fill: '#fffbeb',
+        stroke: '#f59e0b',
         meta: '上游组件层',
       }),
       makeSankeyNode({
@@ -534,8 +537,8 @@ function buildScenario(eventTitle: string): DemoScenario | null {
         x: 470,
         y: 242,
         width: 170,
-        fill: '#fff7ed',
-        stroke: '#fb923c',
+        fill: '#ecfdf5',
+        stroke: '#10b981',
         meta: '上游组件层',
       }),
       makeSankeyNode({
@@ -546,8 +549,8 @@ function buildScenario(eventTitle: string): DemoScenario | null {
         x: 690,
         y: 162,
         width: 170,
-        fill: '#ecfeff',
-        stroke: '#14b8a6',
+        fill: '#f5f3ff',
+        stroke: '#8b5cf6',
         meta: '成本传导层',
       }),
       makeSankeyNode({
@@ -558,8 +561,8 @@ function buildScenario(eventTitle: string): DemoScenario | null {
         x: 910,
         y: 162,
         width: 180,
-        fill: '#f5f3ff',
-        stroke: '#8b5cf6',
+        fill: '#fff1f2',
+        stroke: '#f43f5e',
         meta: '成本传导层',
       }),
       makeSankeyNode({
@@ -570,20 +573,20 @@ function buildScenario(eventTitle: string): DemoScenario | null {
         x: 1140,
         y: 162,
         width: 190,
-        fill: '#f0fdf4',
-        stroke: '#22c55e',
+        fill: '#eff6ff',
+        stroke: '#3b82f6',
         meta: '终端收口',
       }),
     ];
 
     const links: SankeyLink[] = [
-      makeLink('event', layer1.id, 'L1', 1.1, '#6366f1'),
-      makeLink(layer1.id, layer2A.id, findRelationLabel(layer1, layer2A.name), 0.95, '#22c55e', false, '传导强度：0.5', -32),
-      makeLink(layer1.id, layer2B.id, findRelationLabel(layer1, layer2B.name), 0.95, '#22c55e'),
-      makeLink(layer2A.id, layer3.id, findRelationLabel(layer2A, layer3.name), 0.9, '#0ea5e9'),
-      makeLink(layer2B.id, layer3.id, findRelationLabel(layer2B, layer3.name), 0.9, '#0ea5e9'),
+      makeLink('event', layer1.id, 'L1', 1.1, '#06b6d4'),
+      makeLink(layer1.id, layer2A.id, findRelationLabel(layer1, layer2A.name), 0.95, '#f59e0b', false, '传导强度：0.5', -32),
+      makeLink(layer1.id, layer2B.id, findRelationLabel(layer1, layer2B.name), 0.95, '#10b981'),
+      makeLink(layer2A.id, layer3.id, findRelationLabel(layer2A, layer3.name), 0.9, '#f59e0b'),
+      makeLink(layer2B.id, layer3.id, findRelationLabel(layer2B, layer3.name), 0.9, '#10b981'),
       makeLink(layer3.id, layer4.id, findRelationLabel(layer3, layer4.name), 0.85, '#8b5cf6'),
-      makeLink(layer4.id, layer5.id, findRelationLabel(layer4, layer5.name), 0.8, '#16a34a'),
+      makeLink(layer4.id, layer5.id, findRelationLabel(layer4, layer5.name), 0.8, '#f43f5e'),
     ];
 
     return {
@@ -619,8 +622,8 @@ function buildScenario(eventTitle: string): DemoScenario | null {
         x: 60,
         y: 150,
         width: 190,
-        fill: '#eff6ff',
-        stroke: '#3b82f6',
+        fill: '#f5f3ff',
+        stroke: '#8b5cf6',
         showInstancesInNode: false,
       }),
       makeSankeyNode({
@@ -644,15 +647,15 @@ function buildScenario(eventTitle: string): DemoScenario | null {
         x: 590,
         y: 150,
         width: 190,
-        fill: '#f8fafc',
-        stroke: '#64748b',
+        fill: '#ecfeff',
+        stroke: '#06b6d4',
         showInstancesInNode: false,
       }),
     ];
 
     const links: SankeyLink[] = [
       makeLink('left', 'relation', '战略合作', 1.15, '#f59e0b', true),
-      makeLink('relation', 'right', '战略合作', 1.05, '#f59e0b', true),
+      makeLink('relation', 'right', '战略合作', 1.05, '#06b6d4', true),
     ];
 
     return {
@@ -732,7 +735,7 @@ function SankeySceneView({
 
   return (
     <div className="space-y-4">
-      <div className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm">
+      <div className="rounded-[28px] border border-slate-200 bg-[radial-gradient(circle_at_top,_rgba(59,130,246,0.08),_transparent_45%),linear-gradient(180deg,_#f8fbff_0%,_#ffffff_100%)] p-4">
         {showCreateLinkAction ? (
           <div className="mb-3 flex justify-end">
             <Button variant="outline" size="sm" onClick={() => setRelationDialogOpen(true)}>
@@ -740,7 +743,7 @@ function SankeySceneView({
             </Button>
           </div>
         ) : null}
-        <div ref={viewportRef} className="rounded-[22px] bg-[#f4f7f9] p-3">
+        <div ref={viewportRef} className="rounded-[22px] border border-slate-100 bg-[radial-gradient(circle_at_top,_rgba(148,163,184,0.12),_transparent_55%),#f8fafc] p-3">
           <div className="w-full">
             <svg
               width="100%"
