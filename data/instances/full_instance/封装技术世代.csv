@@ -1,0 +1,6 @@
+﻿nameCn,nameEn,objectTypeName,description,property.era,property.generation_name,property.io_density,property.packaging_dimension,property.representative_technology
+2.5D/3D立体封装,2.5D/3D Stacking,封装技术世代,三维立体封装：封装技术拓宽至三维立体结构，进一步提高单位面积内IO密度，代表技术包括CoWoS与SoIC等,2010年后,2.5D/3D,"极高（>10,000 I/O per mm² via Hybrid Bonding）",3D（垂直堆叠）,CoWoS（2.5D）、SoIC（3D）、HBM堆叠、Hybrid Bonding
+BGA球栅阵列,BGA (Ball Grid Array),封装技术世代,球栅阵列封装：通过底部焊球阵列实现芯片与PCB互连，焊球间距最小可达0.3mm，支持数百至上千引脚,20世纪90年代,BGA,高（数百至上千引脚）,2D（阵列式）,BGA焊球阵列、CSP（芯片级封装）
+MCM多芯片组装,MCM (Multi-Chip Module),封装技术世代,多芯片模组：在一个封装内集成多个裸芯片，封装技术微缩至0级封装,2000年后,MCM,高,2D（平面多芯片）,FlipChip（倒装焊）、Bumping（凸点工艺）、WLCSP（晶圆级尺寸封装）
+SMT表面贴装,SMT (Surface-Mount Technology),封装技术世代,表面贴装技术：将电子元件直接贴装到PCB板表面，无需钻孔，可双面贴装，密度10-50引脚/cm²,20世纪80年代,SMT,10-50引脚/cm²,2D,SOP（小外形封装）、QFP（四边引脚扁平封装）
+THT通孔插装,THT (Through-Hole Technology),封装技术世代,通孔插装技术：将元器件引脚插入PCB预钻通孔并焊接固定，最大安装密度约10引脚/cm²,20世纪70年代,THT,~10引脚/cm²,2D,TO（金属圆形封装）、DIP（双列直插封装）

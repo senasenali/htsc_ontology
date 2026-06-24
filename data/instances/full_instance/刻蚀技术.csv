@@ -1,0 +1,3 @@
+﻿nameCn,nameEn,objectTypeName,description,property.anisotropic_capability,property.control_flexibility,property.ion_energy,property.plasma_density,property.plasma_generation,property.target_material
+CCP介质刻蚀,CCP Dielectric Etching,刻蚀技术,电容耦合等离子体刻蚀，利用电容耦合产生等离子体，密度较低但能量较高，适合刻蚀氧化物、氮化物等较硬介质材料,优秀（可实现各向异性刻蚀）,一般,高,较低,电容耦合 (CCP),氧化物、氮化物等硬介质材料/掩膜
+ICP硅刻蚀,ICP Silicon Etching,刻蚀技术,电感耦合等离子体刻蚀，利用电感耦合产生等离子体，密度高、能量较低，可独立控制离子密度和能量，适合刻蚀单晶硅、多晶硅、金属等,优秀,高（可独立控制离子密度和能量）,较低,高,电感耦合 (ICP),单晶硅、多晶硅、金属等较软/较薄材料

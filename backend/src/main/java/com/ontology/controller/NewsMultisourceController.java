@@ -1,9 +1,11 @@
 package com.ontology.controller;
 
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.ontology.entity.NewsMultisource;
 import com.ontology.mapper.NewsMultisourceMapper;
+import com.ontology.project.ProjectScope;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
@@ -21,9 +23,12 @@ public class NewsMultisourceController {
     @GetMapping
     public Map<String, Object> list(
             @RequestParam(defaultValue = "1") int page,
-            @RequestParam(defaultValue = "10") int size) {
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(required = false) String projectId) {
+        String pid = ProjectScope.normalize(projectId);
         Page<NewsMultisource> pageParam = new Page<>(page, size);
-        IPage<NewsMultisource> result = newsMapper.selectPage(pageParam, null);
+        IPage<NewsMultisource> result = newsMapper.selectPage(pageParam,
+                new QueryWrapper<NewsMultisource>().lambda().eq(NewsMultisource::getProjectId, pid));
 
         Map<String, Object> data = new HashMap<>();
         data.put("records", result.getRecords());
@@ -39,7 +44,10 @@ public class NewsMultisourceController {
     }
 
     @PostMapping
-    public Map<String, Object> create(@RequestBody NewsMultisource news) {
+    public Map<String, Object> create(
+            @RequestBody NewsMultisource news,
+            @RequestParam(required = false) String projectId) {
+        news.setProjectId(ProjectScope.normalize(projectId));
         newsMapper.insert(news);
         Map<String, Object> response = new HashMap<>();
         response.put("success", true);

@@ -1,0 +1,14 @@
+product_platform,product_instance,component_or_material,quantity,unit,scope,derivation_method,source_doc,source_date,confidence,notes
+Blackwell,GB200 NVL72,Grace CPU,36,count,per_rack,reported_by_nvidia,https://www.nvidia.com/en-us/data-center/gb200-nvl72/,2026-06-17,high,NVIDIA states GB200 NVL72 configuration is 36 Grace CPUs and 72 Blackwell GPUs.
+Blackwell,GB200 NVL72,Blackwell GPU,72,count,per_rack,reported_by_nvidia,https://www.nvidia.com/en-us/data-center/gb200-nvl72/,2026-06-17,high,NVIDIA states GB200 NVL72 configuration is 36 Grace CPUs and 72 Blackwell GPUs.
+Blackwell,GB200 NVL72,HBM3E,13.4,TB,per_rack,reported_by_nvidia,https://www.nvidia.com/en-us/data-center/gb200-nvl72/,2026-06-17,high,NVIDIA reports 13.4 TB HBM3E GPU memory for GB200 NVL72.
+Blackwell,GB200 Grace Blackwell Superchip,Grace CPU,1,count,per_superchip,reported_by_nvidia,https://www.nvidia.com/en-us/data-center/gb200-nvl72/,2026-06-17,high,NVIDIA reports one Grace CPU and two Blackwell GPUs per GB200 superchip.
+Blackwell,GB200 Grace Blackwell Superchip,Blackwell GPU,2,count,per_superchip,reported_by_nvidia,https://www.nvidia.com/en-us/data-center/gb200-nvl72/,2026-06-17,high,NVIDIA reports one Grace CPU and two Blackwell GPUs per GB200 superchip.
+Blackwell,GB200 Grace Blackwell Superchip,HBM3E,372,GB,per_superchip,reported_by_nvidia,https://www.nvidia.com/en-us/data-center/gb200-nvl72/,2026-06-17,high,NVIDIA reports 372 GB HBM3E per GB200 superchip.
+Blackwell Ultra,Blackwell Ultra GPU,HBM3E,288,GB,per_gpu,reported_by_nvidia_blog,https://developer.nvidia.com/blog/inside-nvidia-blackwell-ultra-the-chip-powering-the-ai-factory-era/,2026-06-17,high,NVIDIA developer blog reports up to 288 GB HBM3E on Blackwell Ultra GPUs.
+Rubin,Vera Rubin NVL72,HBM4,20.7,TB,per_rack,reported_by_nvidia,https://www.nvidia.com/en-us/data-center/vera-rubin-nvl72/,2026-06-17,high,NVIDIA reports 20.7 TB HBM4 for Vera Rubin NVL72.
+Rubin,Vera Rubin NVL72,Olympus CPU cores,3168,count,per_rack,reported_by_nvidia,https://www.nvidia.com/en-us/data-center/vera-rubin-nvl72/,2026-06-17,high,NVIDIA reports 3168 custom NVIDIA Olympus cores for Vera Rubin NVL72.
+Rubin,Vera Rubin NVL72,LPDDR5X CPU memory,54,TB,per_rack,reported_by_nvidia,https://www.nvidia.com/en-us/data-center/vera-rubin-nvl72/,2026-06-17,high,NVIDIA reports 54 TB LPDDR5X CPU memory for Vera Rubin NVL72.
+Rubin,Vera Rubin NVL72,NVIDIA plus HBM4 chips,1296,count,per_rack,reported_by_nvidia,https://www.nvidia.com/en-us/data-center/vera-rubin-nvl72/,2026-06-17,high,NVIDIA table reports total NVIDIA plus HBM4 chips equals 1296.
+Rubin,Vera Rubin Superchip,HBM4,576,GB,per_superchip,reported_by_nvidia,https://www.nvidia.com/en-us/data-center/vera-rubin-nvl72/,2026-06-17,high,NVIDIA reports 576 GB HBM4 per Vera Rubin superchip.
+Rubin,Rubin GPU,HBM4,288,GB,per_gpu,reported_by_nvidia,https://www.nvidia.com/en-us/data-center/vera-rubin-nvl72/,2026-06-17,high,NVIDIA reports 288 GB HBM4 per Rubin GPU.

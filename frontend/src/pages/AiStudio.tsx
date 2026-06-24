@@ -6,11 +6,12 @@ import {
   Sparkles, Loader2, Database, Link as LinkIcon, ArrowRight, Plus,
   CheckCircle2, Send, RotateCcw, Download, MessageSquare, Eye, X,
   ChevronDown, ChevronRight, Key, Layers, Trash2, Clock, PenLine,
-  History, Square,
+  History, Square, FileText, Bookmark, Save,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { api, ConversationResponse } from '@/src/api/client';
-import { streamConversation } from '@/src/api/streamClient';
+import { streamRouterChat } from '@/src/api/streamClient';
+
 import {
   ReactFlow,
   MiniMap,
@@ -126,7 +127,7 @@ function timeLabel(dateStr: string) {
 
 const WELCOME_MSG: ChatMessage = {
   role: 'system',
-  text: '欢迎使用 AI本体建模！我是你的本体建模助手。\n\n你可以：\n• 描述你的业务领域，我来生成完整的数据本体\n• 要求我添加、修改或删除实体和关系\n• 让我为已有本体添加语义层信息\n• 提问关于本体设计的最佳实践\n\n每次对话我都会在已有本体基础上迭代改进。'
+  text: '欢迎使用 AI图谱！我是你的图谱助手。\n\n你可以：\n• 描述你的业务领域，我来生成完整的数据本体\n• 要求我添加、修改或删除实体和关系\n• 让我为已有本体添加语义层信息\n• 提问关于本体设计的最佳实践\n\n每次对话我都会在已有本体基础上迭代改进。'
 };
 
 // ── Main Component ────────────────────────────────────────────────────────────
@@ -145,7 +146,11 @@ export function AiStudio({ data, onUpdate, embedded = false }: { data: OntologyD
   const [input, setInput] = useState('');
   const [sending, setSending] = useState(false);
   const [applying, setApplying] = useState(false);
+  const [pendingExtraction, setPendingExtraction] = useState<any>(null);
+  const [pendingSaving, setPendingSaving] = useState(false);
+  const [toolCalls, setToolCalls] = useState<{ name: string; label: string; status: 'running' | 'done' }[]>([]);
   const chatEndRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
   // AbortController for cancelling in-flight AI requests
   const abortControllerRef = useRef<AbortController | null>(null);
   // Track pending requests per conversation (for background generation)
@@ -163,6 +168,8 @@ export function AiStudio({ data, onUpdate, embedded = false }: { data: OntologyD
 
   // Save timer ref for debouncing
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Track last activity time for 24h session expiry
+  const lastActivityRef = useRef<number>(Date.now());
 
   useEffect(() => {
     setNodes(graphData.nodes);
@@ -174,13 +181,75 @@ export function AiStudio({ data, onUpdate, embedded = false }: { data: OntologyD
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  // ── Load conversation list on mount ─────────────────────────────────────────
+  // ── Load conversation list on mount, restore active if saved ──────────────
   useEffect(() => {
     api.getConversations()
-      .then(res => setConversations(res.conversations))
+      .then(async (res) => {
+        setConversations(res.conversations);
+        // Restore previously active conversation from localStorage
+        const savedId = localStorage.getItem('aistudio_active_conv');
+        if (savedId && res.conversations.some((c: any) => c.id === savedId)) {
+          try {
+            const conv = await api.getConversation(savedId);
+            const msgs = parseConvMessages(conv.messages);
+            const ontology = parseConvOntology(conv.preview_ontology);
+            setActiveConvId(savedId);
+            setMessages(msgs.length > 0 ? msgs : [WELCOME_MSG]);
+            setPreviewOntology(ontology);
+            if (ontology) setShowPreview(true);
+          } catch {}
+        }
+      })
       .catch(() => {})
       .finally(() => setLoadingHistory(false));
   }, []);
+
+  // Refs to track latest values for unmount save
+  const activeConvIdRef = useRef(activeConvId);
+  const messagesRef = useRef(messages);
+  const previewOntologyRef = useRef(previewOntology);
+  activeConvIdRef.current = activeConvId;
+  messagesRef.current = messages;
+  previewOntologyRef.current = previewOntology;
+
+  // Persist activeConvId to localStorage
+  useEffect(() => {
+    if (activeConvId) {
+      localStorage.setItem('aistudio_active_conv', activeConvId);
+    }
+  }, [activeConvId]);
+
+  // Save messages before unmount (via refs to capture latest values)
+  useEffect(() => {
+    return () => {
+      const cid = activeConvIdRef.current;
+      const msgs = messagesRef.current;
+      if (cid && msgs.length > 1) {
+        api.updateConversation(cid, {
+          messages: msgs,
+          preview_ontology: previewOntologyRef.current,
+        }).catch(() => {});
+      }
+    };
+  }, []);
+
+  // ── Helpers for conversation message parsing ──────────────────────────────
+  function parseConvMessages(messages: any): ChatMessage[] {
+    if (!messages) return [];
+    if (Array.isArray(messages)) return messages as ChatMessage[];
+    if (typeof messages === 'string') {
+      try { return JSON.parse(messages); } catch { return []; }
+    }
+    return [];
+  }
+
+  function parseConvOntology(ontology: any): any {
+    if (!ontology) return null;
+    if (typeof ontology === 'string') {
+      try { return JSON.parse(ontology); } catch { return null; }
+    }
+    return ontology;
+  }
 
   // ── Auto-save conversation (debounced) ──────────────────────────────────────
   const saveConversation = useCallback((convId: string, msgs: ChatMessage[], ontology: any) => {
@@ -193,12 +262,35 @@ export function AiStudio({ data, onUpdate, embedded = false }: { data: OntologyD
     }, 1000);
   }, []);
 
+  // Immediate save (for unmount)
+  const saveConversationImmediate = (convId: string, msgs: ChatMessage[], ontology: any) => {
+    api.updateConversation(convId, {
+      messages: msgs,
+      preview_ontology: ontology,
+    }).catch(() => {});
+  };
+
   // ── Load a conversation ─────────────────────────────────────────────────────
   const loadConversation = async (convId: string) => {
     try {
       const conv = await api.getConversation(convId);
-      const msgs: ChatMessage[] = JSON.parse(typeof conv.messages === 'string' ? conv.messages : JSON.stringify(conv.messages));
-      const ontology = typeof conv.preview_ontology === 'string' ? JSON.parse(conv.preview_ontology) : conv.preview_ontology;
+      const msgs = parseConvMessages(conv.messages);
+      const ontology = parseConvOntology(conv.preview_ontology);
+      setPendingExtraction(null); // clear any pending extraction from previous conversation
+
+      // Auto-delete conversations with no real messages (corrupted or empty)
+      if (msgs.length === 0 && conv.created_at) {
+        const age = Date.now() - new Date(conv.created_at).getTime();
+        if (age > 60 * 1000) { // older than 1 minute
+          api.deleteConversation(convId).catch(() => {});
+          setConversations(prev => prev.filter(c => c.id !== convId));
+          setActiveConvId(null);
+          setMessages([WELCOME_MSG]);
+          setPreviewOntology(null);
+          return;
+        }
+      }
+
       setActiveConvId(convId);
       setMessages(msgs.length > 0 ? msgs : [WELCOME_MSG]);
       setPreviewOntology(ontology);
@@ -218,6 +310,7 @@ export function AiStudio({ data, onUpdate, embedded = false }: { data: OntologyD
       setSessionId(null);
       setPreviewOntology(null);
       setMessages([WELCOME_MSG]);
+      setPendingExtraction(null);
     } catch (err: any) {
       toast.error(err.message);
     }
@@ -234,6 +327,7 @@ export function AiStudio({ data, onUpdate, embedded = false }: { data: OntologyD
         setSessionId(null);
         setPreviewOntology(null);
         setMessages([WELCOME_MSG]);
+        setPendingExtraction(null);
       }
       toast.success('对话已删除');
     } catch (err: any) {
@@ -267,13 +361,25 @@ export function AiStudio({ data, onUpdate, embedded = false }: { data: OntologyD
     setSending(false);
   };
 
+
   const handleSend = async () => {
     if (!input.trim() || sending) return;
     const msg = input.trim();
-    setInput('');
 
+    // If there's a pending extraction and user is confirming, save directly
+    if (pendingExtraction && /^(确认|是的|对|好|保存|yes|ok|是|嗯|可以|正确|没问题)\b/i.test(msg) && msg.length < 20) {
+      setInput('');
+      handleKbSave();
+      return;
+    }
+
+    setInput('');
     // Auto-create conversation if none active
     let convId = activeConvId;
+    const now = Date.now();
+    if (convId && (now - lastActivityRef.current > 24 * 60 * 60 * 1000)) {
+      convId = null; // expired session
+    }
     if (!convId) {
       try {
         const conv = await api.createConversation('新对话');
@@ -285,6 +391,7 @@ export function AiStudio({ data, onUpdate, embedded = false }: { data: OntologyD
         return;
       }
     }
+    lastActivityRef.current = now;
 
     const newMessages = [...messages, { role: 'user' as const, text: msg }];
     setMessages(newMessages);
@@ -305,65 +412,123 @@ export function AiStudio({ data, onUpdate, embedded = false }: { data: OntologyD
     const capturedSessionId = sessionId;
     const capturedOntology = previewOntology;
 
+    // Create streaming assistant message placeholder
+    const streamingMsg: ChatMessage = { role: 'assistant', text: '', streaming: true };
+    setMessages([...newMessages, streamingMsg]);
+
+    let fullResponse = '';
+    let newSessionId = capturedSessionId;
+
     try {
-      // 使用流式API
-      let fullResponse = '';
-      let finalOntology: any = null;
-      let isFirstChunk = true;
+      streamLoop: for await (const chunk of streamRouterChat(msg, capturedSessionId || undefined)) {
+        if (abortController.signal.aborted) break;
 
-      // 添加一个临时的assistant消息用于显示流式内容
-      const streamingMsg: ChatMessage = {
-        role: 'assistant',
-        text: '',
-        streaming: true,
-      };
-      setMessages([...newMessages, streamingMsg]);
+        switch (chunk.type) {
+          case 'done':
+            newSessionId = chunk.session_id || newSessionId;
+            fullResponse = chunk.fullContent || fullResponse;
+            break streamLoop;
 
-      for await (const chunk of streamConversation(
-        msg,
-        capturedSessionId || undefined,
-        !capturedSessionId
-      )) {
-        // Check if user aborted
-        if (abortController.signal.aborted) {
-          break;
-        }
+          case 'intent':
+            break;
 
-        if (chunk.error) {
-          throw new Error(chunk.error);
-        }
+          case 'token':
+            fullResponse += chunk.content || '';
+            setMessages(prev => {
+              const msgs = [...prev];
+              const last = msgs[msgs.length - 1];
+              if (last && last.role === 'assistant' && last.streaming) {
+                last.text = fullResponse;
+              }
+              return msgs;
+            });
+            break;
 
-        if (chunk.content) {
-          fullResponse += chunk.content;
-          // 更新流式消息内容
-          setMessages(prev => {
-            const newMsgs = [...prev];
-            const lastMsg = newMsgs[newMsgs.length - 1];
-            if (lastMsg && lastMsg.role === 'assistant' && lastMsg.streaming) {
-              lastMsg.text = fullResponse;
+          case 'tool_start': {
+            const toolLabel = chunk.tool === 'queryConceptGraph' ? '查询概念图谱' : chunk.tool === 'queryInstanceGraph' ? '查询实例数据' : '处理';
+            setToolCalls(prev => [...prev.filter(t => t.name !== chunk.tool), { name: chunk.tool || '', label: toolLabel, status: 'running' }]);
+            break;
+          }
+
+          case 'tool_end': {
+            setToolCalls(prev => prev.map(t => t.name === chunk.tool ? { ...t, status: 'done' } : t));
+            break;
+          }
+
+          case 'ontology':
+            if (!capturedOntology) {
+              setPreviewOntology(chunk.data);
+              setShowPreview(true);
             }
-            return newMsgs;
-          });
-        }
+            break;
 
-        if (chunk.done) {
-          finalOntology = chunk.ontology;
-          break;
+          case 'notice':
+            fullResponse += `\n[${chunk.content || ''}]\n`;
+            setMessages(prev => {
+              const msgs = [...prev];
+              const last = msgs[msgs.length - 1];
+              if (last && last.role === 'assistant' && last.streaming) {
+                last.text = fullResponse;
+              }
+              return msgs;
+            });
+            break;
+
+          case 'error':
+            throw new Error(chunk.content || 'Unknown error');
         }
       }
 
-      // If user switched away, update in background and notify
+      // Clear tool calls after stream ends
+      setToolCalls([]);
+
+      // Try to parse extraction JSON from response
+      let parsedExtraction: any = null;
+      if (fullResponse) {
+        const jsonBlockMatch = fullResponse.match(/```json\s*([\s\S]*?)```/);
+        if (jsonBlockMatch) {
+          try { parsedExtraction = JSON.parse(jsonBlockMatch[1]); } catch {}
+        }
+        if (!parsedExtraction) {
+          try { parsedExtraction = JSON.parse(fullResponse); } catch {}
+        }
+        if (!parsedExtraction) {
+          const braceMatch = fullResponse.match(/\{(?:[^{}]|(?:\{[^{}]*\}))*"nodeRefs"(?:[^{}]|(?:\{[^{}]*\}))*\}/);
+          if (braceMatch) {
+            try { parsedExtraction = JSON.parse(braceMatch[0]); } catch {}
+          }
+        }
+        if (parsedExtraction && parsedExtraction.title) {
+          setPendingExtraction(parsedExtraction);
+        }
+      }
+
+      // Determine final ontology from response
+      let finalOntology: any = null;
+      if (!parsedExtraction) {
+        const jsonMatch = fullResponse.match(/```json\s*([\s\S]*?)```/);
+        if (jsonMatch) {
+          try {
+            const parsed = JSON.parse(jsonMatch[1]);
+            if (parsed.objectTypes || parsed.linkTypes) {
+              finalOntology = parsed;
+            }
+          } catch {}
+        }
+      }
+
       const isStillActive = activeConvId === capturedConvId;
 
-      const assistantMsg: ChatMessage = {
-        role: 'assistant',
-        text: fullResponse,
-        ontology: finalOntology,
-        streaming: false,
-      };
-      const updatedMessages = [...newMessages, assistantMsg];
+      // Update streaming placeholder
+      const updatedMessages = newMessages.map((m, i) =>
+        i === newMessages.length - 1 && m.role === 'assistant' && (m as any).streaming
+          ? { ...m, text: fullResponse, streaming: false }
+          : m
+      ) as ChatMessage[];
+      if (!updatedMessages.some(m => m.role === 'assistant' && m.text === fullResponse)) {
+        updatedMessages.push({ role: 'assistant', text: fullResponse, streaming: false });
+      }
 
-      // Always update messages (component may have re-mounted with same conv)
       if (isStillActive) {
         setMessages(updatedMessages);
       }
@@ -377,12 +542,14 @@ export function AiStudio({ data, onUpdate, embedded = false }: { data: OntologyD
         }
       }
 
-      // Persist regardless of whether user is still viewing
+      // Persist conversation
       if (capturedConvId) {
         saveConversation(capturedConvId, updatedMessages, newOntology);
       }
 
-      // If background, show toast notification
+      // Store sessionId for next call
+      setSessionId(newSessionId);
+
       if (!isStillActive) {
         toast.success('后台对话已完成，点击查看结果', {
           action: { label: '查看', onClick: () => loadConversation(capturedConvId!) },
@@ -390,7 +557,6 @@ export function AiStudio({ data, onUpdate, embedded = false }: { data: OntologyD
       }
     } catch (err: any) {
       if (err.name === 'AbortError' || abortController.signal.aborted) {
-        // User aborted — add a cancelled indicator
         const cancelledMessages = [...newMessages, {
           role: 'assistant' as const,
           text: '⏹ 已停止生成。',
@@ -403,6 +569,36 @@ export function AiStudio({ data, onUpdate, embedded = false }: { data: OntologyD
     } finally {
       abortControllerRef.current = null;
       setSending(false);
+    }
+  };
+
+  const handleKbSave = async () => {
+    if (!pendingExtraction) return;
+    setPendingSaving(true);
+    try {
+      const refs = (pendingExtraction.nodeRefs || []).map((ref: any) => ({
+        refObjectTypeId: ref.objectTypeId,
+        refInstanceId: ref.instanceId || "",
+        instanceName: ref.instanceName || "",
+      }));
+      const payload = {
+        title: pendingExtraction.title || "未命名资讯",
+        content: pendingExtraction.content || "",
+        sourceType: pendingExtraction.sourceType || "other",
+        sourceName: pendingExtraction.sourceName || "AI 录入",
+        authors: pendingExtraction.authors || "AI",
+        entryDate: pendingExtraction.entryDate || undefined,
+        refs,
+      };
+      const res = await api.createKnowledgeBase(payload);
+      if (res.success) {
+        toast.success("资讯已保存到资讯库");
+        setPendingExtraction(null);
+      }
+    } catch (err: any) {
+      toast.error("保存失败: " + err.message);
+    } finally {
+      setPendingSaving(false);
     }
   };
 
@@ -430,12 +626,6 @@ export function AiStudio({ data, onUpdate, embedded = false }: { data: OntologyD
   };
 
   // Quick action buttons
-  const quickActions = [
-    { label: '生成医院管理本体', prompt: '请帮我生成一个医院管理系统的完整本体，包括医生、患者、科室、病房、处方、检查报告等核心实体' },
-    { label: '生成电商平台本体', prompt: '请帮我生成一个电商平台的本体，包括商品、订单、用户、店铺、评价、物流等核心实体' },
-    { label: '添加语义层', prompt: '请分析当前本体，为所有实体之间添加更丰富的语义关系，并补充缺失的属性' },
-    { label: '细化属性', prompt: '请检查当前本体的所有实体，为每个实体补充到至少 8 个属性，确保有主键、名称、描述、状态、创建时间和更新时间' },
-  ];
 
   return (
     <div className={cn("flex h-full gap-0", !embedded && "-m-6")}>
@@ -529,7 +719,7 @@ export function AiStudio({ data, onUpdate, embedded = false }: { data: OntologyD
         <div className="flex items-center justify-between p-4 border-b border-slate-200 shrink-0">
           <div className="flex items-center gap-2">
             <Sparkles className="w-5 h-5 text-purple-600" />
-            <h1 className="font-bold text-lg text-slate-900">AI本体建模</h1>
+            <h1 className="font-bold text-lg text-slate-900">AI图谱</h1>
             {sessionId && (
               <Badge variant="outline" className="font-mono text-[10px] text-purple-600 border-purple-200">
                 会话中
@@ -583,7 +773,7 @@ export function AiStudio({ data, onUpdate, embedded = false }: { data: OntologyD
               )}
             </div>
           ))}
-          {sending && (
+          {sending && !messages.some(m => m.role === 'assistant' && (m as any).streaming) && (
             <div className="flex justify-start gap-2">
               <div className="w-7 h-7 rounded-full bg-purple-100 text-purple-600 flex items-center justify-center shrink-0">
                 <Sparkles className="w-3.5 h-3.5" />
@@ -600,19 +790,71 @@ export function AiStudio({ data, onUpdate, embedded = false }: { data: OntologyD
               </div>
             </div>
           )}
-          <div ref={chatEndRef} />
-        </div>
+            <div ref={chatEndRef} />
+          </div>
 
-        {/* Quick actions (show only when no messages yet) */}
-        {messages.length <= 1 && (
-          <div className="px-4 pb-2 flex flex-wrap gap-2">
-            {quickActions.map(qa => (
-              <button key={qa.label}
-                className="px-3 py-1.5 text-xs font-medium bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-full transition-colors"
-                onClick={() => { setInput(qa.prompt); }}>
-                {qa.label}
-              </button>
-            ))}
+        {/* ── Tool Call Activity Indicator ──────────────────────────── */}
+        {sending && toolCalls.length > 0 && (
+          <div className="px-4 py-2 border-t border-slate-100 shrink-0">
+            <div className="flex items-center gap-3">
+              {toolCalls.slice(-3).map((tc, i) => (
+                <div key={i} className="flex items-center gap-1.5 text-xs">
+                  {tc.status === 'running' ? (
+                    <Loader2 className="w-3 h-3 animate-spin text-blue-500" />
+                  ) : (
+                    <span className="w-3 h-3 flex items-center justify-center text-green-600">✓</span>
+                  )}
+                  <span className={tc.status === 'running' ? 'text-slate-600' : 'text-slate-400 line-through'}>{tc.label}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* ── Knowledge Base Extraction Confirmation ────────────────── */}
+        {pendingExtraction && (
+          <div className="px-4 py-3 border-t border-slate-200 bg-amber-50 shrink-0">
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="text-sm font-semibold text-slate-800 flex items-center gap-1.5">
+                <FileText className="w-4 h-4 text-amber-600" />
+                提取结果
+              </h3>
+            </div>
+            <div className="space-y-1.5">
+              <div className="text-xs">
+                <span className="font-medium text-slate-500">标题：</span>
+                <span className="text-slate-800">{pendingExtraction.title || '未命名'}</span>
+              </div>
+              {pendingExtraction.content && (
+                <div className="text-xs">
+                  <span className="font-medium text-slate-500">内容：</span>
+                  <span className="text-slate-600 line-clamp-2">{pendingExtraction.content.substring(0, 200)}</span>
+                </div>
+              )}
+              {pendingExtraction.nodeRefs && pendingExtraction.nodeRefs.length > 0 && (
+                <div className="text-xs">
+                  <span className="font-medium text-slate-500">关联节点：</span>
+                  <div className="flex flex-wrap gap-1 mt-1">
+                    {pendingExtraction.nodeRefs.map((ref: any, i: number) => (
+                      <Badge key={i} variant="outline" className="text-[10px] bg-amber-100 text-amber-700 border-amber-200">
+                        {ref.instanceName || ref.objectTypeId || '未知'}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
+              <div className="flex items-center gap-2 pt-1.5">
+                <Button size="sm" className="gap-1 h-8 text-xs bg-amber-600 hover:bg-amber-700"
+                  onClick={handleKbSave} disabled={pendingSaving}>
+                  {pendingSaving ? <Loader2 className="w-3 h-3 animate-spin" /> : <Save className="w-3 h-3" />}
+                  {pendingSaving ? '保存中...' : '保存资讯'}
+                </Button>
+                <Button variant="outline" size="sm" className="gap-1 h-8 text-xs"
+                  onClick={() => setPendingExtraction(null)} disabled={pendingSaving}>
+                  取消
+                </Button>
+              </div>
+            </div>
           </div>
         )}
 
@@ -631,10 +873,25 @@ export function AiStudio({ data, onUpdate, embedded = false }: { data: OntologyD
               </Button>
             </div>
           )}
+          {/* Shortcut buttons (pre-fill input, no mode lock) */}
+          <div className="flex items-center gap-2 mb-3">
+            <button
+              onClick={() => { setInput("根据以下信息来修改图谱："); inputRef.current?.focus(); }}
+              className="px-3 py-1.5 text-xs font-medium rounded-full bg-purple-50 text-purple-700 hover:bg-purple-100 transition-colors">
+              <Sparkles className="w-3 h-3 inline mr-1" />AI图谱
+            </button>
+            <button
+              onClick={() => { setInput("请解析以下资讯并挂载到图谱对应节点中："); inputRef.current?.focus(); }}
+              className="px-3 py-1.5 text-xs font-medium rounded-full bg-amber-50 text-amber-700 hover:bg-amber-100 transition-colors">
+              <FileText className="w-3 h-3 inline mr-1" />资讯挂载
+            </button>
+          </div>
+
           <div className="flex gap-2">
             <textarea
+              ref={inputRef}
               className="flex-1 min-h-[44px] max-h-[120px] p-3 rounded-xl border border-slate-200 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-purple-200 focus:border-purple-400"
-              placeholder="描述你的业务领域，或要求修改当前本体..."
+              placeholder="描述你的业务领域、修改图谱，或粘贴资讯文本..."
               value={input}
               onChange={e => setInput(e.target.value)}
               onKeyDown={e => {

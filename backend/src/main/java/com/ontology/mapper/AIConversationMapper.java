@@ -11,6 +11,6 @@ import java.util.List;
 @Mapper
 public interface AIConversationMapper extends BaseMapper<AIConversation> {
     
-    @Select("SELECT id, title, created_at, updated_at, project_id FROM ai_conversations WHERE project_id = #{projectId} ORDER BY updated_at DESC")
+    @Select("SELECT id, title, created_at, updated_at, project_id FROM ai_conversations WHERE project_id = #{projectId} AND messages IS NOT NULL AND messages != '[]' AND messages != '' ORDER BY updated_at DESC")
     List<AIConversation> selectListOrdered(@Param("projectId") String projectId);
 }

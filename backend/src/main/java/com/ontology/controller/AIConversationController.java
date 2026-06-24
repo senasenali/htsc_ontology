@@ -6,6 +6,8 @@ import com.ontology.project.ProjectScope;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
@@ -119,28 +121,28 @@ public class AIConversationController {
         return Map.of("success", true);
     }
     
+    private static final ObjectMapper MAPPER = new ObjectMapper()
+            .findAndRegisterModules(); // supports Java 8 date/time types
+
     private Object parseJson(String json) {
         if (json == null || json.isEmpty()) {
             return null;
         }
         try {
-            // Simple JSON parsing - in production use Jackson ObjectMapper
-            if (json.startsWith("[")) {
-                return new java.util.ArrayList<>();
-            } else if (json.startsWith("{")) {
-                return new HashMap<>();
-            }
-            return json;
-        } catch (Exception e) {
+            return MAPPER.readValue(json, Object.class);
+        } catch (JsonProcessingException e) {
             return json;
         }
     }
-    
+
     private String toJson(Object obj) {
         if (obj == null) {
             return null;
         }
-        // Simple JSON serialization - in production use Jackson ObjectMapper
-        return obj.toString();
+        try {
+            return MAPPER.writeValueAsString(obj);
+        } catch (JsonProcessingException e) {
+            return obj.toString();
+        }
     }
 }

@@ -1,0 +1,10 @@
+﻿nameCn,nameEn,objectTypeName,description
+Ada Lovelace,Ada Lovelace,GPU架构世代,NVIDIA RTX 40系GPU架构
+Ampere,Ampere,GPU架构世代,NVIDIA Ampere GPU架构
+Blackwell,Blackwell,GPU架构世代,NVIDIA Blackwell GPU架构
+CDNA,CDNA,GPU架构世代,AMD计算GPU架构系列
+CDNA 3,CDNA 3,GPU架构世代,AMD CDNA 3代计算架构
+Hopper,Hopper,GPU架构世代,NVIDIA Hopper GPU架构
+RDNA,RDNA,GPU架构世代,AMD图形GPU架构系列
+Turing,Turing,GPU架构世代,NVIDIA Turing GPU架构
+Volta,Volta,GPU架构世代,NVIDIA Volta GPU架构

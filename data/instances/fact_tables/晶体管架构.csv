@@ -1,0 +1,8 @@
+﻿nameCn,nameEn,objectTypeName,description
+Planar CMOS,Planar CMOS,晶体管架构,平面CMOS晶体管
+FinFET,FinFET,晶体管架构,鳍式场效应晶体管，先进制程主流架构
+GAAFET,GAAFET,晶体管架构,全环绕栅极场效应晶体管
+CFET,CFET,晶体管架构,互补场效应晶体管，GAA后演进方向
+Multi-bridge Channel FET,Multi-bridge Channel FET,晶体管架构,多桥沟道FET，GAA同范畴
+SOI,SOI,晶体管架构,绝缘体上硅技术
+FD-SOI,FD-SOI,晶体管架构,全耗尽SOI，兼顾性能与功耗

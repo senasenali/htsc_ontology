@@ -25,4 +25,6 @@ public class NewsMultisource {
     private String abs;
 
     private String originalurl;
+
+    private String projectId;
 }

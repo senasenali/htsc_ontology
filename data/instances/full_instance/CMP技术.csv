@@ -1,0 +1,4 @@
+﻿nameCn,nameEn,objectTypeName,description,property.cmp_category,property.key_material,property.primary_application,property.specific_process
+氧化硅薄膜CMP,Oxide Film CMP,CMP技术,针对氧化硅薄膜的化学机械抛光，包括层间介质层（ILD）和浅沟槽隔离层（STI）,氧化硅薄膜,"SiO₂, SiN",逻辑 / 3D NAND / DRAM,层间介质层ILD / 浅沟槽隔离层STI
+硅薄膜CMP,Silicon Film CMP,CMP技术,针对硅薄膜的化学机械抛光，包括晶圆表面和多晶硅,硅薄膜,"Si, Poly-Si",3D NAND / DRAM / 逻辑 / 硅片加工,晶圆表面 / 多晶硅
+金属薄膜CMP,Metal Film CMP,CMP技术,针对金属薄膜的化学机械抛光，包括钨/钨阻挡层、铜/铜阻挡层、铝等工艺,金属薄膜,"W, Cu, Al",3D NAND / DRAM / 逻辑 / Metal Gate（28nm及以下）,钨&钨阻挡层 / 铜&铜阻挡层 / 铝

@@ -1,0 +1,14 @@
+﻿nameCn,nameEn,objectTypeName,description
+AMD Instinct MI300X,,训练加速器,Data-center GPU accelerator for AI training and HPC.
+AMD Instinct MI325X,,训练加速器,Data-center GPU accelerator for training and inference.
+AMD Instinct MI350 Series,,训练加速器,AMD CDNA 4 accelerator series for generative AI training and HPC.
+Cambricon MLU370-X8,,训练加速器,Cambricon cloud training AI accelerator card.
+Cambricon MLU370-X8 cloud training AI accelerator,,训练加速器,Cambricon MLU370-X8 cloud training AI accelerator card.
+Huawei Ascend 910 AI Processor,,训练加速器,Huawei Ascend training AI processor used in Atlas training systems.
+Huawei Ascend 910C AI Processor,,训练加速器,Huawei Ascend AI processor used in Atlas 900 A3 SuperPoD.
+Intel Gaudi 3 AI Accelerator,,训练加速器,Intel AI accelerator for training and inference.
+MetaX C500 GPU accelerator,,训练加速器,MetaX GPU accelerator product for AI computing.
+NVIDIA B200 Tensor Core GPU,,训练加速器,Blackwell-generation accelerator used for training and inference.
+NVIDIA GB200 NVL72,,训练加速器,Rack-scale Grace Blackwell system with 72 Blackwell GPUs.
+NVIDIA H100 Tensor Core GPU,,训练加速器,AI training accelerator used in data-center training workloads.
+NVIDIA H200 Tensor Core GPU,,训练加速器,AI/HPC accelerator with HBM3e memory for large models and HPC.

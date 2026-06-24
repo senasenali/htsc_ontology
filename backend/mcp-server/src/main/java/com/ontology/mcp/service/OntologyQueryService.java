@@ -54,22 +54,14 @@ public class OntologyQueryService {
                 ot.put("parentObjectType", row.get("parent_object_type"));
                 ot.put("objectTypeCategory", row.get("object_type_category"));
 
-                // Get properties for this object type
-                String propSql = "SELECT id, name, type, is_primary_key, base_column, description " +
-                        "FROM properties WHERE object_type_id = ? AND (project_id = ? OR project_id IS NULL)";
+                // Only include property count (not full details) to keep response small
+                String propSql = "SELECT COUNT(*) as cnt FROM properties WHERE object_type_id = ? AND (project_id = ? OR project_id IS NULL)";
                 List<Map<String, Object>> propRows = jdbc.queryForList(propSql, row.get("id"), projectId);
-                JSONArray properties = new JSONArray();
-                for (Map<String, Object> prop : propRows) {
-                    JSONObject p = new JSONObject();
-                    p.put("id", prop.get("id"));
-                    p.put("name", prop.get("name"));
-                    p.put("type", prop.get("type"));
-                    p.put("isPrimaryKey", prop.get("is_primary_key"));
-                    p.put("baseColumn", prop.get("base_column"));
-                    p.put("description", prop.get("description"));
-                    properties.add(p);
+                if (!propRows.isEmpty()) {
+                    ot.put("propertyCount", propRows.get(0).get("cnt"));
+                } else {
+                    ot.put("propertyCount", 0);
                 }
-                ot.put("properties", properties);
                 objectTypes.add(ot);
             }
             result.put("objectTypes", objectTypes);
@@ -86,8 +78,10 @@ public class OntologyQueryService {
             if (keyword != null && !keyword.isBlank()) {
                 ltSql += " AND (lt.name LIKE ? OR lt.description LIKE ? OR sot.name LIKE ? OR tot.name LIKE ?)";
                 String like = "%" + keyword + "%";
+                ltSql += " LIMIT 30";
                 ltRows = jdbc.queryForList(ltSql, projectId, like, like, like, like);
             } else {
+                ltSql += " LIMIT 30";
                 ltRows = jdbc.queryForList(ltSql, projectId);
             }
 
@@ -111,7 +105,7 @@ public class OntologyQueryService {
             // 3. Try to query Neo4j for graph overview
             try (Session session = neo4jDriver.session()) {
                 var neoResult = session.run(
-                        "MATCH (n) WHERE n.projectId = $projectId RETURN labels(n) as labels, count(n) as cnt LIMIT 20",
+                        "MATCH (n) WHERE n.projectId = $projectId RETURN labels(n) as labels, count(n) as cnt LIMIT 10",
                         org.neo4j.driver.Values.parameters("projectId", projectId)
                 );
                 JSONObject neoSummary = new JSONObject();
@@ -140,8 +134,8 @@ public class OntologyQueryService {
         if (projectId == null || projectId.isBlank()) {
             projectId = "project_public";
         }
-        if (maxDepth <= 0) maxDepth = 2;
-        if (maxDepth > 5) maxDepth = 5;
+        if (maxDepth <= 0) maxDepth = 1;
+        if (maxDepth > 2) maxDepth = 2;
 
         JSONObject result = new JSONObject();
         try {
@@ -205,10 +199,10 @@ public class OntologyQueryService {
                                 .collect(Collectors.joining(" OR "));
                         instSql += " WHERE " + whereClause;
                     }
-                    instSql += " LIMIT 20";
+                    instSql += " LIMIT 10";
                     instRows = jdbc.queryForList(instSql);
                 } else {
-                    instSql += " LIMIT 20";
+                    instSql += " LIMIT 10";
                     instRows = jdbc.queryForList(instSql);
                 }
 
@@ -292,10 +286,10 @@ public class OntologyQueryService {
                 String lidSql;
                 if (isSameType) {
                     lidSql = "SELECT * FROM link_instance_data WHERE link_type_id = ? " +
-                            "AND (source_instance_id = ? OR target_instance_id = ?) LIMIT 20";
+                            "AND (source_instance_id = ? OR target_instance_id = ?) LIMIT 10";
                 } else {
                     lidSql = "SELECT * FROM link_instance_data WHERE link_type_id = ? AND " +
-                            (isSource ? "source_instance_id" : "target_instance_id") + " = ? LIMIT 20";
+                            (isSource ? "source_instance_id" : "target_instance_id") + " = ? LIMIT 10";
                 }
 
                 List<Map<String, Object>> linkInstances;
@@ -356,6 +350,8 @@ public class OntologyQueryService {
                                     if (!relPk.isEmpty()) {
                                         String pkCol = (String) relPk.get(0).get("base_column");
                                         relDataSql += " WHERE `" + pkCol + "` = ? LIMIT 1";
+                                    } else {
+                                        relDataSql += " LIMIT 10";
                                     }
                                     try {
                                         List<Map<String, Object>> relData;

@@ -1,0 +1,12 @@
+﻿nameCn,nameEn,objectTypeName,description,property.bandwidth_scaling_factor,property.integration_dimension,property.max_die_count,property.packaging_type
+2.5D封装,2.5D Interposer,先进封装技术,通过中介层实现水平互连的2.5D集成,,,,
+2.5D硅中介层,2.5D Silicon Interposer,先进封装技术,通过硅中介层实现多芯片水平互连，I/O密度20-100 I/O per mm²，I/O间距100-200μm,3,2.5D,8,2.5D Interposer
+3D堆叠TSV+μBump,3D Stacking TSV + Micro-bumps,先进封装技术,通过硅通孔(TSV)和微凸块(μBump)实现芯片垂直堆叠，I/O密度100-300 I/O per mm²，I/O间距50-100μm,10,3D,16,3D Stacking
+3D封装,3D Stacking,先进封装技术,通过TSV实现垂直堆叠的3D集成,,,,
+FOPLP,Fan-Out PLP,先进封装技术,扇出型面板级封装,,,,
+FOWLP,Fan-Out WLP,先进封装技术,扇出型晶圆级封装,,,,
+倒装芯片,Flip Chip,先进封装技术,通过焊球/凸点将芯片倒装贴装于基板，I/O密度10-15 I/O per mm²，I/O间距>600μm,1,2D,1,Flip Chip
+晶圆级封装,Wafer Level Packaging,先进封装技术,在晶圆上直接完成封装,,,,
+混合键合,Hybrid Bonding,先进封装技术,"无Bump的铜-铜直接键合互连技术，I/O密度>10,000 I/O per mm²，I/O间距<5μm",20,3D,16,Hybrid Bonding
+超高密度扇出,Ultra High-Density Fan-Out,先进封装技术,超高密度扇出型封装，I/O密度15-20 I/O per mm²，I/O间距200-300μm,2,2D,4,Fan-Out
+面板级封装,Panel Level Packaging,先进封装技术,在大面板上实现封装，提升面积利用率,,,,

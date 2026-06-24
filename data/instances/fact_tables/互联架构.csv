@@ -1,0 +1,4 @@
+﻿nameCn,nameEn,objectTypeName,description
+NVLink,NVLink,互联架构,NVIDIA高速GPU互连
+Infinity Fabric,Infinity Fabric,互联架构,AMD高速互连架构
+Xe Link,Xe Link,互联架构,Intel GPU互连链路

@@ -1,0 +1,12 @@
+﻿nameCn,nameEn,objectTypeName,description
+CoWoS-S/L,CoWoS-S/L,封装方案,台积电2.5D封装（硅中介层/大尺寸）
+InFO,Integrated Fan-Out,封装方案,台积电集成扇出封装
+SoIC,System on Integrated Chips,封装方案,台积电3D堆叠技术
+Foveros,Foveros,封装方案,Intel 3D堆叠封装
+EMIB,Embedded Multi-die Interconnect Bridge,封装方案,Intel嵌入式多晶粒互连桥接
+VIPack,VIPack,封装方案,日月光先进封装平台
+FOCoS-Bridge,FOCoS-Bridge,封装方案,ASE扇出型桥接封装
+Amkor Advanced Packaging,Amkor Advanced Packaging,封装方案,Amkor先进封装方案
+FC-BGA,Flip Chip BGA,封装方案,倒装芯片球栅阵列封装
+FC-CSP,Flip Chip CSP,封装方案,倒装芯片级封装
+SiP,System in Package,封装方案,系统级封装

@@ -2,6 +2,17 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Button } from '@/src/components/ui/button';
 import { Send, Loader2, Bot, User, Sparkles, AlertCircle } from 'lucide-react';
 import { cn } from '@/src/lib/utils';
+import MarkdownRender from '@/src/components/MarkdownRender';
+
+// ── Project isolation helper ─────────────────────────────────────────────────
+
+function currentProjectQuery(): string {
+  const projectId =
+    typeof window !== 'undefined'
+      ? window.localStorage.getItem('currentProjectId') || 'project_public'
+      : 'project_public';
+  return `projectId=${encodeURIComponent(projectId)}`;
+}
 
 // ── Types ───────────────────────────────────────────────────────────────────────
 
@@ -24,7 +35,7 @@ async function sendChatMessage(
   message: string,
   sessionId?: string
 ): Promise<ChatResponse> {
-  const response = await fetch('/api/knowledge-chat', {
+  const response = await fetch(`/api/knowledge-chat?${currentProjectQuery()}`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ message, session_id: sessionId }),
@@ -36,114 +47,73 @@ async function sendChatMessage(
   return response.json();
 }
 
-// ── Simple Markdown Renderer ────────────────────────────────────────────────────
-
-function escapeHtml(text: string): string {
-  return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-}
-
-function renderInline(text: string): string {
-  return text
-    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-    .replace(/`([^`]+)`/g, '<code class="bg-slate-100 text-blue-700 px-1.5 py-0.5 rounded text-sm font-mono">$1</code>')
-    .replace(/\n/g, '<br/>');
-}
-
-function renderTable(block: string): string {
-  const rows = block.trim().split('\n');
-  if (rows.length < 2) return renderInline(block);
-
-  const headers = rows[0].split('|').filter(c => c.trim());
-  // Skip separator row (|---|)
-  const dataRows = rows.slice(2);
-
-  let html = '<div class="overflow-x-auto my-2"><table class="min-w-full text-sm border-collapse border border-slate-300">';
-  html += '<thead><tr>';
-  for (const h of headers) {
-    html += `<th class="border border-slate-300 bg-slate-100 px-3 py-1.5 text-left font-semibold">${renderInline(h.trim())}</th>`;
-  }
-  html += '</tr></thead><tbody>';
-  for (const row of dataRows) {
-    if (!row.trim() || row.trim().startsWith('---')) continue;
-    const cells = row.split('|').filter(c => c.trim());
-    html += '<tr>';
-    for (const cell of cells) {
-      html += `<td class="border border-slate-300 px-3 py-1.5">${renderInline(cell.trim())}</td>`;
-    }
-    html += '</tr>';
-  }
-  html += '</tbody></table></div>';
-  return html;
-}
-
-function MarkdownRender({ content }: { content: string }) {
-  // Process code blocks first (protect them from other transformations)
-  const codeBlocks: string[] = [];
-  let processed = content.replace(/```(\w*)\n([\s\S]*?)```/g, (_, _lang, code) => {
-    const idx = codeBlocks.length;
-    codeBlocks.push(`<pre class="bg-slate-900 text-green-400 p-3 rounded-lg my-2 text-sm overflow-x-auto"><code>${escapeHtml(code)}</code></pre>`);
-    return `%%CODEBLOCK_${idx}%%`;
-  });
-
-  // Split into blocks by double newlines
-  const blocks = processed.split('\n\n');
-  const htmlBlocks = blocks.map(block => {
-    // Restore code blocks
-    block = block.replace(/%%CODEBLOCK_(\d+)%%/g, (_, idx) => codeBlocks[parseInt(idx)]);
-
-    const trimmed = block.trim();
-    if (!trimmed) return '';
-
-    // Restore code blocks
-    if (trimmed.startsWith('%%CODEBLOCK_')) return trimmed;
-
-    // Horizontal rule
-    if (/^---+$/.test(trimmed)) return '<hr class="my-3 border-slate-300" />';
-
-    // Heading
-    const headingMatch = trimmed.match(/^(#{1,3})\s+(.+)$/m);
-    if (headingMatch) {
-      const level = headingMatch[1].length;
-      const text = headingMatch[2];
-      const Tag = `h${level}` as keyof JSX.IntrinsicElements;
-      return `<${Tag} class="text-${level === 1 ? 'lg' : 'base'} font-bold text-slate-900 mt-4 mb-2">${renderInline(text)}</${Tag}>`;
-    }
-
-    // Unordered list
-    if (/^- .+/m.test(trimmed)) {
-      const items = trimmed.split('\n').filter(l => l.trim().startsWith('- '));
-      return '<ul class="list-disc pl-5 my-2 space-y-1">' +
-        items.map(item => `<li class="text-slate-700">${renderInline(item.replace(/^- /, ''))}</li>`).join('') +
-        '</ul>';
-    }
-
-    // Table
-    if (trimmed.startsWith('|')) return renderTable(trimmed);
-
-    // Regular paragraph
-    return `<p class="text-slate-700 mb-2">${renderInline(trimmed)}</p>`;
-  });
-
-  const finalHtml = htmlBlocks.filter(Boolean).join('\n');
-
-  return (
-    <div className="text-sm leading-relaxed" dangerouslySetInnerHTML={{ __html: finalHtml }} />
-  );
-}
-
 // ── AiChat Page ─────────────────────────────────────────────────────────────────
 
-export default function AiChat() {
-  const [messages, setMessages] = useState<Message[]>([{
+const CHAT_STORAGE_KEY = 'aichat_messages';
+const SESSION_STORAGE_KEY = 'aichat_session_id';
+
+function loadMessages(): Message[] {
+  try {
+    const raw = localStorage.getItem(CHAT_STORAGE_KEY);
+    if (raw) {
+      const parsed: Message[] = JSON.parse(raw);
+      return parsed.map(m => ({ ...m, timestamp: new Date(m.timestamp) }));
+    }
+  } catch { /* ignore */ }
+  return [{
     id: 'welcome',
     role: 'assistant',
     content: '你好！我是本体图谱智能助手。我可以帮助你查询本体概念图谱和实例图谱数据。\n\n**你可以这样问我：**\n- "有哪些对象类型？"\n- "查询名为xxx的对象类型的属性"\n- "有哪些链接关系？"\n- "查询xxx对象的实例数据"\n- "搜索xxx相关的所有实例关系"',
     timestamp: new Date(),
-  }]);
+  }];
+}
+
+function loadSessionId(): string | undefined {
+  try {
+    return localStorage.getItem(SESSION_STORAGE_KEY) || undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+function saveMessages(messages: Message[]) {
+  try {
+    localStorage.setItem(CHAT_STORAGE_KEY, JSON.stringify(messages));
+  } catch { /* ignore */ }
+}
+
+function saveSessionId(sessionId: string | undefined) {
+  try {
+    if (sessionId) {
+      localStorage.setItem(SESSION_STORAGE_KEY, sessionId);
+    } else {
+      localStorage.removeItem(SESSION_STORAGE_KEY);
+    }
+  } catch { /* ignore */ }
+}
+
+export default function AiChat() {
+  const [messages, setMessages] = useState<Message[]>(loadMessages);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
-  const [sessionId, setSessionId] = useState<string | undefined>();
+  const [sessionId, setSessionId] = useState<string | undefined>(loadSessionId);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const initialized = useRef(false);
+
+  // Persist messages to localStorage on every change
+  useEffect(() => {
+    // Skip the initial render; only persist after user interaction
+    if (!initialized.current) {
+      initialized.current = true;
+      return;
+    }
+    saveMessages(messages);
+  }, [messages]);
+
+  // Persist sessionId
+  useEffect(() => {
+    saveSessionId(sessionId);
+  }, [sessionId]);
 
   // Auto scroll to bottom
   useEffect(() => {
@@ -199,13 +169,16 @@ export default function AiChat() {
   };
 
   const handleNewChat = () => {
-    setMessages([{
+    const welcome: Message = {
       id: 'welcome',
       role: 'assistant',
       content: '你好！我是本体图谱智能助手。我可以帮助你查询本体概念图谱和实例图谱数据。\n\n**你可以这样问我：**\n- "有哪些对象类型？"\n- "查询名为xxx的对象类型的属性"\n- "有哪些链接关系？"\n- "查询xxx对象的实例数据"\n- "搜索xxx相关的所有实例关系"',
       timestamp: new Date(),
-    }]);
+    };
+    setMessages([welcome]);
     setSessionId(undefined);
+    saveMessages([welcome]);
+    saveSessionId(undefined);
   };
 
   return (

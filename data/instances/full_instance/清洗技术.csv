@@ -1,0 +1,5 @@
+﻿nameCn,nameEn,objectTypeName,description,property.cleaning_method,property.cleaning_precision,property.cross_contamination_risk,property.mechanism,property.throughput_characteristic
+单片清洗,Single-wafer Cleaning,清洗技术,一次清洗一片晶圆，具有较高的工艺环境控制能力与微粒去除能力，有效解决交叉污染，在先进工艺中成为主流（占比74.6%）,旋转喷淋/兆声波/二流体/机械刷洗,高,低,物理喷射+化学清洗,低（单片处理）
+干法清洗,Dry Cleaning,清洗技术,不采用溶液的清洗技术，通过等离子体清洗、气相清洗或束流清洗去除晶圆表面杂质，一般用于去除氧化物、环氧树脂溢出或微颗粒污染物,干法（等离子体/气相/束流）,高,低,等离子化学反应/气相反应/束流物理去除,中等
+槽式清洗,Batch Cleaning,清洗技术,一批次同时清洗多片晶圆，清洗产能高，适合大批量生产（占比18.1%）,溶液浸泡/兆声波,一般,大,化学浸泡+辅助物理,高（批量处理）
+湿法清洗,Wet Cleaning,清洗技术,使用化学药液与晶圆表面杂质发生化学反应，生成溶于水的物质后再用高纯水冲洗（占90%以上清洗步骤）,湿法（化学药液）,高（单片）/ 一般（槽式）,低（单片）/ 高（槽式）,化学反应溶解,视设备类型而定（单片/槽式）

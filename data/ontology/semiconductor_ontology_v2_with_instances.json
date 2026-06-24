@@ -1,0 +1,538 @@
+{
+  "objectType": [
+    {
+      "nameCn": "技术路线",
+      "nameEn": "technology_route",
+      "parentObjectTypeName": null,
+      "properties": [],
+      "description": "半导体技术路线研究体系",
+      "type": "实体对象类型",
+      "source": "SEMI"
+    },
+    {
+      "nameCn": "技术世代层",
+      "nameEn": "technology_generation_layer",
+      "parentObjectTypeName": "技术路线",
+      "properties": [],
+      "description": "描述行业技术演进世代",
+      "type": "实体对象类型",
+      "source": "SEMI"
+    },
+    {
+      "nameCn": "技术能力层",
+      "nameEn": "technology_capability_layer",
+      "parentObjectTypeName": "技术路线",
+      "properties": [],
+      "description": "描述实现半导体能力的核心技术",
+      "type": "实体对象类型",
+      "source": "SEMI"
+    },
+    {
+      "nameCn": "工业应用层",
+      "nameEn": "industrial_application_layer",
+      "parentObjectTypeName": "技术路线",
+      "properties": [],
+      "description": "描述产业界实际交付的平台与方案",
+      "type": "实体对象类型",
+      "source": "SEMI"
+    },
+
+    {
+      "nameCn": "制程节点世代",
+      "nameEn": "process_node_generation",
+      "parentObjectTypeName": "技术世代层",
+      "properties": [
+        {"propertyCn":"制程名称","propertyEn":"node_name","dataType":"string","unit":""},
+        {"propertyCn":"技术世代","propertyEn":"generation","dataType":"string","unit":""},
+        {"propertyCn":"晶体管密度","propertyEn":"transistor_density","dataType":"number","unit":"MTr/mm²"},
+        {"propertyCn":"光刻要求","propertyEn":"lithography_requirement","dataType":"string","unit":""},
+        {"propertyCn":"性能功耗特征","propertyEn":"performance_power_characteristic","dataType":"string","unit":""}
+      ],
+      "description": "",
+      "type": "实体对象类型",
+      "source": "TSMC"
+    },
+
+    {
+      "nameCn": "指令集架构世代",
+      "nameEn": "isa_generation",
+      "parentObjectTypeName": "技术世代层",
+      "properties": [
+        {"propertyCn":"名称","propertyEn":"name","dataType":"string","unit":""},
+        {"propertyCn":"架构类型","propertyEn":"architecture_type","dataType":"string","unit":""},
+        {"propertyCn":"维护方","propertyEn":"maintainer","dataType":"string","unit":""},
+        {"propertyCn":"开放程度","propertyEn":"openness","dataType":"string","unit":""},
+        {"propertyCn":"生态成熟度","propertyEn":"ecosystem_maturity","dataType":"string","unit":""},
+        {"propertyCn":"目标市场","propertyEn":"target_market","dataType":"string","unit":""}
+      ],
+      "description": "",
+      "type": "实体对象类型",
+      "source": "ARM"
+    },
+
+    {
+      "nameCn": "CPU微架构世代",
+      "nameEn": "cpu_microarchitecture_generation",
+      "parentObjectTypeName": "技术世代层",
+      "properties": [
+        {"propertyCn":"名称","propertyEn":"name","dataType":"string","unit":""},
+        {"propertyCn":"发布时间","propertyEn":"release_date","dataType":"date","unit":""},
+        {"propertyCn":"性能代际","propertyEn":"performance_generation","dataType":"string","unit":""}
+      ],
+      "description": "",
+      "type": "实体对象类型",
+      "source": "AMD"
+    },
+
+    {
+      "nameCn": "GPU架构世代",
+      "nameEn": "gpu_architecture_generation",
+      "parentObjectTypeName": "技术世代层",
+      "properties": [
+        {"propertyCn":"名称","propertyEn":"name","dataType":"string","unit":""},
+        {"propertyCn":"发布时间","propertyEn":"release_date","dataType":"date","unit":""},
+        {"propertyCn":"目标负载","propertyEn":"target_workload","dataType":"string","unit":""},
+        {"propertyCn":"性能代际","propertyEn":"performance_generation","dataType":"string","unit":""}
+      ],
+      "description": "",
+      "type": "实体对象类型",
+      "source": "NVIDIA"
+    },
+
+    {
+      "nameCn": "DRAM世代",
+      "nameEn": "dram_generation",
+      "parentObjectTypeName": "技术世代层",
+      "properties": [
+        {"propertyCn":"名称","propertyEn":"name","dataType":"string","unit":""},
+        {"propertyCn":"传输速率","propertyEn":"data_rate","dataType":"number","unit":"MT/s"},
+        {"propertyCn":"工作电压","propertyEn":"voltage","dataType":"number","unit":"V"}
+      ],
+      "description": "",
+      "type": "实体对象类型",
+      "source": "JEDEC"
+    },
+
+    {
+      "nameCn": "HBM世代",
+      "nameEn": "hbm_generation",
+      "parentObjectTypeName": "技术世代层",
+      "properties": [
+        {"propertyCn":"名称","propertyEn":"name","dataType":"string","unit":""},
+        {"propertyCn":"带宽","propertyEn":"bandwidth","dataType":"number","unit":"GB/s"},
+        {"propertyCn":"堆叠层数","propertyEn":"stack_layers","dataType":"number","unit":"层"}
+      ],
+      "description": "",
+      "type": "实体对象类型",
+      "source": "JEDEC"
+    },
+
+    {
+      "nameCn": "晶体管架构",
+      "nameEn": "transistor_architecture",
+      "parentObjectTypeName": "技术能力层",
+      "properties": [
+        {"propertyCn":"沟道结构","propertyEn":"channel_structure","dataType":"string","unit":""},
+        {"propertyCn":"制造复杂度","propertyEn":"manufacturing_complexity","dataType":"string","unit":""},
+        {"propertyCn":"能效提升幅度","propertyEn":"power_efficiency_improvement","dataType":"number","unit":"%"},
+        {"propertyCn":"适配制程范围","propertyEn":"compatible_node_range","dataType":"string","unit":""}
+      ],
+      "description": "",
+      "type": "实体对象类型",
+      "source": "IEEE"
+    },
+
+    {
+      "nameCn": "光刻技术",
+      "nameEn": "lithography_technology",
+      "parentObjectTypeName": "技术能力层",
+      "properties": [
+        {"propertyCn":"曝光波长","propertyEn":"wavelength","dataType":"number","unit":"nm"},
+        {"propertyCn":"分辨率极限","propertyEn":"resolution_limit","dataType":"number","unit":"nm"},
+        {"propertyCn":"成本影响","propertyEn":"wafer_cost_impact","dataType":"string","unit":""}
+      ],
+      "description": "",
+      "type": "实体对象类型",
+      "source": "ASML"
+    },
+
+    {
+      "nameCn": "先进封装技术",
+      "nameEn": "advanced_packaging_technology",
+      "parentObjectTypeName": "技术能力层",
+      "properties": [
+        {"propertyCn":"封装类型","propertyEn":"packaging_type","dataType":"string","unit":""},
+        {"propertyCn":"集成维度","propertyEn":"integration_dimension","dataType":"string","unit":""},
+        {"propertyCn":"最大芯粒数量","propertyEn":"max_die_count","dataType":"number","unit":"个"},
+        {"propertyCn":"带宽提升倍数","propertyEn":"bandwidth_scaling_factor","dataType":"number","unit":"x"}
+      ],
+      "description": "",
+      "type": "实体对象类型",
+      "source": "TSMC"
+    },
+
+    {
+      "nameCn": "互联架构",
+      "nameEn": "interconnect_architecture",
+      "parentObjectTypeName": "技术能力层",
+      "properties": [
+        {"propertyCn":"作用范围","propertyEn":"scope","dataType":"string","unit":""},
+        {"propertyCn":"带宽等级","propertyEn":"bandwidth_level","dataType":"string","unit":""},
+        {"propertyCn":"延迟特征","propertyEn":"latency_characteristic","dataType":"string","unit":""},
+        {"propertyCn":"拓扑结构","propertyEn":"topology","dataType":"string","unit":""}
+      ],
+      "description": "",
+      "type": "实体对象类型",
+      "source": "NVIDIA"
+    },
+
+    {
+      "nameCn": "互联标准",
+      "nameEn": "interconnect_standard",
+      "parentObjectTypeName": "技术能力层",
+      "properties": [
+        {"propertyCn":"标准组织","propertyEn":"governing_body","dataType":"string","unit":""},
+        {"propertyCn":"协议层级","propertyEn":"protocol_layer","dataType":"string","unit":""},
+        {"propertyCn":"最大带宽","propertyEn":"max_bandwidth","dataType":"number","unit":"GB/s"}
+      ],
+      "description": "",
+      "type": "实体对象类型",
+      "source": "PCI-SIG"
+    },
+
+    {
+      "nameCn": "制造工艺",
+      "nameEn": "process_platform",
+      "parentObjectTypeName": "工业应用层",
+      "properties": [
+        {"propertyCn":"名称","propertyEn":"name","dataType":"string","unit":""},
+        {"propertyCn":"所属公司","propertyEn":"company","dataType":"string","unit":""},
+        {"propertyCn":"成熟度","propertyEn":"maturity","dataType":"string","unit":""}
+      ],
+      "description": "",
+      "type": "实体对象类型",
+      "source": "TSMC"
+    },
+
+    {
+      "nameCn": "封装方案",
+      "nameEn": "packaging_solution",
+      "parentObjectTypeName": "工业应用层",
+      "properties": [
+        {"propertyCn":"名称","propertyEn":"name","dataType":"string","unit":""},
+        {"propertyCn":"技术类型","propertyEn":"technology_type","dataType":"string","unit":""},
+        {"propertyCn":"集成密度","propertyEn":"integration_density","dataType":"string","unit":""}
+      ],
+      "description": "",
+      "type": "实体对象类型",
+      "source": "ASE"
+    },
+
+    {
+      "nameCn": "光互连技术",
+      "nameEn": "optical_interconnect_technology",
+      "parentObjectTypeName": "技术能力层",
+      "properties": [
+        {"propertyCn":"集成方式","propertyEn":"integration_approach","dataType":"string","unit":""},
+        {"propertyCn":"光波导材料","propertyEn":"waveguide_material","dataType":"string","unit":""},
+        {"propertyCn":"单通道速率","propertyEn":"per_lane_data_rate","dataType":"number","unit":"Gbps"},
+        {"propertyCn":"功耗效率","propertyEn":"power_efficiency","dataType":"number","unit":"pJ/bit"}
+      ],
+      "description": "以光信号替代电信号实现芯片间/芯片内互连的技术体系，包括共封装光学(CPO)、硅光集成等方向",
+      "type": "实体对象类型",
+      "source": "HTSC"
+    },
+
+    {
+      "nameCn": "封装基板技术",
+      "nameEn": "packaging_substrate_technology",
+      "parentObjectTypeName": "技术能力层",
+      "properties": [
+        {"propertyCn":"基板材料","propertyEn":"substrate_material","dataType":"string","unit":""},
+        {"propertyCn":"线宽线距","propertyEn":"line_width_spacing","dataType":"number","unit":"μm"},
+        {"propertyCn":"最大尺寸","propertyEn":"max_substrate_size","dataType":"number","unit":"mm"},
+        {"propertyCn":"热膨胀系数","propertyEn":"cte","dataType":"number","unit":"ppm/K"}
+      ],
+      "description": "先进封装中的基板材料与工艺技术，包括玻璃基板、TGV等新兴方向",
+      "type": "实体对象类型",
+      "source": "HTSC"
+    },
+
+    {
+      "nameCn": "特色工艺平台",
+      "nameEn": "specialty_process_platform",
+      "parentObjectTypeName": "技术能力层",
+      "properties": [
+        {"propertyCn":"平台类型","propertyEn":"platform_type","dataType":"string","unit":""},
+        {"propertyCn":"最小线宽","propertyEn":"min_feature_size","dataType":"number","unit":"nm"},
+        {"propertyCn":"最大工作电压","propertyEn":"max_operating_voltage","dataType":"number","unit":"V"},
+        {"propertyCn":"目标应用","propertyEn":"target_application","dataType":"string","unit":""}
+      ],
+      "description": "BCD、LDMOS等非逻辑类的专用工艺平台，面向功率、射频等特定应用",
+      "type": "实体对象类型",
+      "source": "HTSC"
+    }
+  ],
+
+  "linkType": [
+    {
+      "name": "CPU微架构世代对应指令集架构世代",
+      "sourceObjectType": "CPU微架构世代",
+      "targetObjectType": "指令集架构世代",
+      "linkTypeCategory": "对应",
+      "redix": "多对一（N:1）"
+    },
+    {
+      "name": "GPU架构世代对应制程节点世代",
+      "sourceObjectType": "GPU架构世代",
+      "targetObjectType": "制程节点世代",
+      "linkTypeCategory": "对应",
+      "redix": "多对多（N:N）"
+    },
+    {
+      "name": "HBM世代对应DRAM世代",
+      "sourceObjectType": "HBM世代",
+      "targetObjectType": "DRAM世代",
+      "linkTypeCategory": "对应",
+      "redix": "多对多（N:N）"
+    },
+    {
+      "name": "制程节点世代对应晶体管架构",
+      "sourceObjectType": "制程节点世代",
+      "targetObjectType": "晶体管架构",
+      "linkTypeCategory": "对应",
+      "redix": "多对多（N:N）"
+    },
+    {
+      "name": "制程节点世代对应光刻技术",
+      "sourceObjectType": "制程节点世代",
+      "targetObjectType": "光刻技术",
+      "linkTypeCategory": "对应",
+      "redix": "多对多（N:N）"
+    },
+    {
+      "name": "先进封装技术依赖互联标准",
+      "sourceObjectType": "先进封装技术",
+      "targetObjectType": "互联标准",
+      "linkTypeCategory": "依赖",
+      "redix": "多对多（N:N）"
+    },
+    {
+      "name": "先进封装技术支持HBM世代",
+      "sourceObjectType": "先进封装技术",
+      "targetObjectType": "HBM世代",
+      "linkTypeCategory": "支持",
+      "redix": "多对多（N:N）"
+    },
+    {
+      "name": "制造工艺对应制程节点世代",
+      "sourceObjectType": "制造工艺",
+      "targetObjectType": "制程节点世代",
+      "linkTypeCategory": "对应",
+      "redix": "多对一（N:1）"
+    },
+    {
+      "name": "制造工艺采用晶体管架构",
+      "sourceObjectType": "制造工艺",
+      "targetObjectType": "晶体管架构",
+      "linkTypeCategory": "采用",
+      "redix": "多对一（N:1）"
+    },
+    {
+      "name": "制造工艺采用光刻技术",
+      "sourceObjectType": "制造工艺",
+      "targetObjectType": "光刻技术",
+      "linkTypeCategory": "采用",
+      "redix": "多对一（N:1）"
+    },
+    {
+      "name": "封装方案实现先进封装技术",
+      "sourceObjectType": "封装方案",
+      "targetObjectType": "先进封装技术",
+      "linkTypeCategory": "实现",
+      "redix": "多对一（N:1）"
+    },
+    {
+      "name": "特色工艺平台对应制程节点世代",
+      "sourceObjectType": "特色工艺平台",
+      "targetObjectType": "制程节点世代",
+      "linkTypeCategory": "对应",
+      "redix": "多对多（N:N）"
+    },
+    {
+      "name": "制造工艺集成特色工艺平台",
+      "sourceObjectType": "制造工艺",
+      "targetObjectType": "特色工艺平台",
+      "linkTypeCategory": "集成",
+      "redix": "多对多（N:N）"
+    },
+    {
+      "name": "封装基板技术支持先进封装技术",
+      "sourceObjectType": "封装基板技术",
+      "targetObjectType": "先进封装技术",
+      "linkTypeCategory": "支持",
+      "redix": "多对多（N:N）"
+    },
+    {
+      "name": "封装方案采用封装基板技术",
+      "sourceObjectType": "封装方案",
+      "targetObjectType": "封装基板技术",
+      "linkTypeCategory": "采用",
+      "redix": "多对多（N:N）"
+    },
+    {
+      "name": "光互连技术协同先进封装技术",
+      "sourceObjectType": "光互连技术",
+      "targetObjectType": "先进封装技术",
+      "linkTypeCategory": "协同",
+      "redix": "多对多（N:N）"
+    },
+    {
+      "name": "互联架构采用光互连技术",
+      "sourceObjectType": "互联架构",
+      "targetObjectType": "光互连技术",
+      "linkTypeCategory": "采用",
+      "redix": "多对多（N:N）"
+    },
+    {
+      "name": "互联标准支持光互连技术",
+      "sourceObjectType": "互联标准",
+      "targetObjectType": "光互连技术",
+      "linkTypeCategory": "支持",
+      "redix": "多对多（N:N）"
+    }
+  ],
+
+  "instance": [
+    {"nameCn":"3nm","nameEn":"3nm","objectTypeName":"制程节点世代","description":"先进逻辑制程节点"},
+    {"nameCn":"5nm","nameEn":"5nm","objectTypeName":"制程节点世代","description":"先进逻辑制程节点"},
+    {"nameCn":"7nm","nameEn":"7nm","objectTypeName":"制程节点世代","description":"先进逻辑制程节点"},
+    {"nameCn":"10nm","nameEn":"10nm","objectTypeName":"制程节点世代","description":"先进逻辑制程节点"},
+    {"nameCn":"14nm","nameEn":"14nm","objectTypeName":"制程节点世代","description":"先进逻辑制程节点"},
+    {"nameCn":"28nm","nameEn":"28nm","objectTypeName":"制程节点世代","description":"成熟逻辑制程节点"},
+    {"nameCn":"2nm","nameEn":"2nm","objectTypeName":"制程节点世代","description":"先进逻辑制程节点（GAA时代）"},
+
+    {"nameCn":"ARMv8","nameEn":"ARMv8","objectTypeName":"指令集架构世代","description":"ARM 64位架构"},
+    {"nameCn":"ARMv9","nameEn":"ARMv9","objectTypeName":"指令集架构世代","description":"ARM新一代架构"},
+    {"nameCn":"RISC-V","nameEn":"RISC-V","objectTypeName":"指令集架构世代","description":"开源精简指令集架构"},
+    {"nameCn":"x86","nameEn":"x86","objectTypeName":"指令集架构世代","description":"Intel/AMD 复杂指令集架构"},
+
+    {"nameCn":"Zen 4","nameEn":"Zen 4","objectTypeName":"CPU微架构世代","description":"AMD Zen 4 CPU微架构"},
+    {"nameCn":"Zen 5","nameEn":"Zen 5","objectTypeName":"CPU微架构世代","description":"AMD Zen 5 CPU微架构（最新）"},
+
+    {"nameCn":"Hopper","nameEn":"Hopper","objectTypeName":"GPU架构世代","description":"NVIDIA Hopper GPU架构"},
+    {"nameCn":"Blackwell","nameEn":"Blackwell","objectTypeName":"GPU架构世代","description":"NVIDIA Blackwell GPU架构"},
+    {"nameCn":"Ada Lovelace","nameEn":"Ada Lovelace","objectTypeName":"GPU架构世代","description":"NVIDIA RTX 40系GPU架构"},
+    {"nameCn":"Volta","nameEn":"Volta","objectTypeName":"GPU架构世代","description":"NVIDIA Volta GPU架构"},
+    {"nameCn":"Ampere","nameEn":"Ampere","objectTypeName":"GPU架构世代","description":"NVIDIA Ampere GPU架构"},
+    {"nameCn":"Turing","nameEn":"Turing","objectTypeName":"GPU架构世代","description":"NVIDIA Turing GPU架构"},
+    {"nameCn":"CDNA","nameEn":"CDNA","objectTypeName":"GPU架构世代","description":"AMD计算GPU架构系列"},
+    {"nameCn":"CDNA 3","nameEn":"CDNA 3","objectTypeName":"GPU架构世代","description":"AMD CDNA 3代计算架构"},
+    {"nameCn":"RDNA","nameEn":"RDNA","objectTypeName":"GPU架构世代","description":"AMD图形GPU架构系列"},
+
+    {"nameCn":"DDR3","nameEn":"DDR3","objectTypeName":"DRAM世代","description":"第三代DDR内存"},
+    {"nameCn":"DDR4","nameEn":"DDR4","objectTypeName":"DRAM世代","description":"第四代DDR内存"},
+    {"nameCn":"DDR5","nameEn":"DDR5","objectTypeName":"DRAM世代","description":"第五代DDR内存"},
+    {"nameCn":"DDR6","nameEn":"DDR6","objectTypeName":"DRAM世代","description":"第六代DDR内存"},
+    {"nameCn":"LPDDR5","nameEn":"LPDDR5","objectTypeName":"DRAM世代","description":"低功耗DDR5"},
+    {"nameCn":"LPDDR6","nameEn":"LPDDR6","objectTypeName":"DRAM世代","description":"低功耗DDR6"},
+    {"nameCn":"GDDR6","nameEn":"GDDR6","objectTypeName":"DRAM世代","description":"图形用DDR6"},
+    {"nameCn":"GDDR7","nameEn":"GDDR7","objectTypeName":"DRAM世代","description":"图形用DDR7"},
+
+    {"nameCn":"HBM2","nameEn":"HBM2","objectTypeName":"HBM世代","description":"第二代HBM"},
+    {"nameCn":"HBM2E","nameEn":"HBM2E","objectTypeName":"HBM世代","description":"HBM2扩展版"},
+    {"nameCn":"HBM3","nameEn":"HBM3","objectTypeName":"HBM世代","description":"第三代HBM"},
+    {"nameCn":"HBM3E","nameEn":"HBM3E","objectTypeName":"HBM世代","description":"HBM3扩展版"},
+    {"nameCn":"HBM4","nameEn":"HBM4","objectTypeName":"HBM世代","description":"第四代HBM（预计2026年量产）"},
+
+    {"nameCn":"Planar CMOS","nameEn":"Planar CMOS","objectTypeName":"晶体管架构","description":"平面CMOS晶体管"},
+    {"nameCn":"FinFET","nameEn":"FinFET","objectTypeName":"晶体管架构","description":"鳍式场效应晶体管，先进制程主流架构"},
+    {"nameCn":"GAA","nameEn":"GAA","objectTypeName":"晶体管架构","description":"全环绕栅极（Gate-All-Around），FinFET下一代"},
+    {"nameCn":"GAAFET","nameEn":"GAAFET","objectTypeName":"晶体管架构","description":"全环绕栅极场效应晶体管"},
+    {"nameCn":"CFET","nameEn":"CFET","objectTypeName":"晶体管架构","description":"互补场效应晶体管，GAA后演进方向"},
+    {"nameCn":"Multi-bridge Channel FET","nameEn":"Multi-bridge Channel FET","objectTypeName":"晶体管架构","description":"多桥沟道FET，GAA同范畴"},
+    {"nameCn":"SOI","nameEn":"SOI","objectTypeName":"晶体管架构","description":"绝缘体上硅技术"},
+    {"nameCn":"FD-SOI","nameEn":"FD-SOI","objectTypeName":"晶体管架构","description":"全耗尽SOI，兼顾性能与功耗"},
+
+    {"nameCn":"DUV","nameEn":"DUV","objectTypeName":"光刻技术","description":"深紫外光刻"},
+    {"nameCn":"EUV","nameEn":"EUV","objectTypeName":"光刻技术","description":"极紫外光刻，7nm及以下制程关键"},
+    {"nameCn":"High-NA EUV","nameEn":"High-NA EUV","objectTypeName":"光刻技术","description":"高数值孔径EUV，3nm以下制程关键"},
+    {"nameCn":"多重图案化","nameEn":"Multi-patterning","objectTypeName":"光刻技术","description":"多次曝光分辨率增强技术"},
+    {"nameCn":"浸没式光刻","nameEn":"Immersion Lithography","objectTypeName":"光刻技术","description":"浸没式曝光技术"},
+    {"nameCn":"SADP","nameEn":"SADP","objectTypeName":"光刻技术","description":"自对准双重图案化"},
+    {"nameCn":"SAQP","nameEn":"SAQP","objectTypeName":"光刻技术","description":"自对准四重图案化"},
+
+    {"nameCn":"2.5D封装","nameEn":"2.5D Interposer","objectTypeName":"先进封装技术","description":"通过中介层实现水平互连的2.5D集成"},
+    {"nameCn":"3D封装","nameEn":"3D Stacking","objectTypeName":"先进封装技术","description":"通过TSV实现垂直堆叠的3D集成"},
+    {"nameCn":"混合键合","nameEn":"Hybrid Bonding","objectTypeName":"先进封装技术","description":"直接铜-铜键合（die-to-wafer / wafer-to-wafer）"},
+    {"nameCn":"TSV","nameEn":"Through Silicon Via","objectTypeName":"先进封装技术","description":"硅通孔，2.5D/3D封装关键互连技术"},
+    {"nameCn":"RDL","nameEn":"Redistribution Layer","objectTypeName":"先进封装技术","description":"重布线层，扇出封装关键技术"},
+    {"nameCn":"Bump","nameEn":"Micro Bump","objectTypeName":"先进封装技术","description":"微凸块芯片互联技术"},
+    {"nameCn":"Direct Bonding","nameEn":"Direct Bonding","objectTypeName":"先进封装技术","description":"直接键合技术"},
+    {"nameCn":"面板级封装","nameEn":"Panel Level Packaging","objectTypeName":"先进封装技术","description":"在大面板上实现封装，提升面积利用率"},
+    {"nameCn":"晶圆级封装","nameEn":"Wafer Level Packaging","objectTypeName":"先进封装技术","description":"在晶圆上直接完成封装"},
+    {"nameCn":"FOWLP","nameEn":"Fan-Out WLP","objectTypeName":"先进封装技术","description":"扇出型晶圆级封装"},
+    {"nameCn":"FOPLP","nameEn":"Fan-Out PLP","objectTypeName":"先进封装技术","description":"扇出型面板级封装"},
+    {"nameCn":"扇出型封装","nameEn":"Fan-out","objectTypeName":"先进封装技术","description":"扇出型封装"},
+    {"nameCn":"中介层","nameEn":"Interposer","objectTypeName":"先进封装技术","description":"硅/有机中介层"},
+    {"nameCn":"硅桥","nameEn":"Silicon Bridge","objectTypeName":"先进封装技术","description":"嵌入式硅桥互连"},
+    {"nameCn":"垂直供电架构","nameEn":"Vertical Power Delivery","objectTypeName":"先进封装技术","description":"为AI芯片设计的垂直供电封装方案"},
+
+    {"nameCn":"NVLink","nameEn":"NVLink","objectTypeName":"互联架构","description":"NVIDIA高速GPU互连"},
+    {"nameCn":"NVSwitch","nameEn":"NVSwitch","objectTypeName":"互联架构","description":"NVIDIA NVLink交换芯片"},
+    {"nameCn":"Infinity Fabric","nameEn":"Infinity Fabric","objectTypeName":"互联架构","description":"AMD高速互连架构"},
+    {"nameCn":"Xe Link","nameEn":"Xe Link","objectTypeName":"互联架构","description":"Intel GPU互连链路"},
+
+    {"nameCn":"PCIe","nameEn":"PCI Express","objectTypeName":"互联标准","description":"通用外设互连标准"},
+    {"nameCn":"CXL","nameEn":"Compute Express Link","objectTypeName":"互联标准","description":"计算快速链接，存算分离接口"},
+    {"nameCn":"UCIe","nameEn":"Universal Chiplet Interconnect Express","objectTypeName":"互联标准","description":"通用芯粒互连标准"},
+    {"nameCn":"BoW","nameEn":"Bridge of Wires","objectTypeName":"互联标准","description":"简易桥接Die-to-Die标准"},
+    {"nameCn":"AIB","nameEn":"Advanced Interface Bus","objectTypeName":"互联标准","description":"高级接口总线（Intel Die-to-Die）"},
+    {"nameCn":"CCIX","nameEn":"Cache Coherent Interconnect for Accelerators","objectTypeName":"互联标准","description":"加速器缓存一致性互连"},
+    {"nameCn":"InfiniBand","nameEn":"InfiniBand","objectTypeName":"互联标准","description":"高性能计算互连网络"},
+    {"nameCn":"NVMe","nameEn":"Non-Volatile Memory Express","objectTypeName":"互联标准","description":"非易失性内存标准"},
+    {"nameCn":"RoCE","nameEn":"RDMA over Converged Ethernet","objectTypeName":"互联标准","description":"融合以太网RDMA"},
+
+    {"nameCn":"TSMC N3E","nameEn":"TSMC N3E","objectTypeName":"制造工艺","description":"台积电3nm增强版制造工艺"},
+    {"nameCn":"Samsung SF3","nameEn":"Samsung SF3","objectTypeName":"制造工艺","description":"三星3nm GAA制造工艺"},
+    {"nameCn":"Intel 18A","nameEn":"Intel 18A","objectTypeName":"制造工艺","description":"Intel 18Å制造工艺"},
+
+    {"nameCn":"CoWoS-S/L","nameEn":"CoWoS-S/L","objectTypeName":"封装方案","description":"台积电2.5D封装（硅中介层/大尺寸）"},
+    {"nameCn":"InFO","nameEn":"Integrated Fan-Out","objectTypeName":"封装方案","description":"台积电集成扇出封装"},
+    {"nameCn":"SoIC","nameEn":"System on Integrated Chips","objectTypeName":"封装方案","description":"台积电3D堆叠技术"},
+    {"nameCn":"Foveros","nameEn":"Foveros","objectTypeName":"封装方案","description":"Intel 3D堆叠封装"},
+    {"nameCn":"EMIB","nameEn":"Embedded Multi-die Interconnect Bridge","objectTypeName":"封装方案","description":"Intel嵌入式多晶粒互连桥接"},
+    {"nameCn":"VIPack","nameEn":"VIPack","objectTypeName":"封装方案","description":"日月光先进封装平台"},
+    {"nameCn":"FOCoS-Bridge","nameEn":"FOCoS-Bridge","objectTypeName":"封装方案","description":"ASE扇出型桥接封装"},
+    {"nameCn":"Amkor Advanced Packaging","nameEn":"Amkor Advanced Packaging","objectTypeName":"封装方案","description":"Amkor先进封装方案"},
+    {"nameCn":"FC-BGA","nameEn":"Flip Chip BGA","objectTypeName":"封装方案","description":"倒装芯片球栅阵列封装"},
+    {"nameCn":"FC-CSP","nameEn":"Flip Chip CSP","objectTypeName":"封装方案","description":"倒装芯片级封装"},
+    {"nameCn":"SiP","nameEn":"System in Package","objectTypeName":"封装方案","description":"系统级封装"},
+
+    {"nameCn":"CPO","nameEn":"Co-Packaged Optics","objectTypeName":"光互连技术","description":"共封装光学，将光引擎与交换芯片共封装"},
+    {"nameCn":"NPO","nameEn":"Near-Package Optics","objectTypeName":"光互连技术","description":"近封装光学"},
+    {"nameCn":"光引擎","nameEn":"Optical Engine","objectTypeName":"光互连技术","description":"CPO中的光收发引擎"},
+    {"nameCn":"硅光","nameEn":"Silicon Photonics","objectTypeName":"光互连技术","description":"硅基光电子集成"},
+    {"nameCn":"光互连","nameEn":"Optical Interconnect","objectTypeName":"光互连技术","description":"光信号互连"},
+    {"nameCn":"VCSEL","nameEn":"Vertical-Cavity Surface-Emitting Laser","objectTypeName":"光互连技术","description":"垂直腔面发射激光器"},
+    {"nameCn":"DFB","nameEn":"Distributed Feedback Laser","objectTypeName":"光互连技术","description":"分布式反馈激光器"},
+    {"nameCn":"EML","nameEn":"Electro-absorption Modulated Laser","objectTypeName":"光互连技术","description":"电吸收调制激光器"},
+    {"nameCn":"APD","nameEn":"Avalanche Photodiode","objectTypeName":"光互连技术","description":"雪崩光电探测器"},
+    {"nameCn":"SPAD","nameEn":"Single-Photon Avalanche Diode","objectTypeName":"光互连技术","description":"单光子雪崩二极管"},
+    {"nameCn":"SiPM","nameEn":"Silicon Photomultiplier","objectTypeName":"光互连技术","description":"硅光电倍增器"},
+    {"nameCn":"调制器","nameEn":"Modulator","objectTypeName":"光互连技术","description":"光调制器"},
+    {"nameCn":"微环","nameEn":"Microring","objectTypeName":"光互连技术","description":"微环谐振器"},
+    {"nameCn":"AWG","nameEn":"Arrayed Waveguide Grating","objectTypeName":"光互连技术","description":"阵列波导光栅"},
+    {"nameCn":"PLC","nameEn":"Planar Lightwave Circuit","objectTypeName":"光互连技术","description":"平面光波回路"},
+    {"nameCn":"WDM","nameEn":"Wavelength Division Multiplexing","objectTypeName":"光互连技术","description":"波分复用"},
+    {"nameCn":"DWDM","nameEn":"Dense WDM","objectTypeName":"光互连技术","description":"密集波分复用"},
+    {"nameCn":"LWDM","nameEn":"LAN-WDM","objectTypeName":"光互连技术","description":"局域网波分复用"},
+    {"nameCn":"EDFA","nameEn":"Erbium-Doped Fiber Amplifier","objectTypeName":"光互连技术","description":"掺铒光纤放大器"},
+
+    {"nameCn":"玻璃基板","nameEn":"Glass Substrate","objectTypeName":"封装基板技术","description":"下一代封装基板材料"},
+    {"nameCn":"TGV","nameEn":"Through Glass Via","objectTypeName":"封装基板技术","description":"玻璃通孔技术"},
+
+    {"nameCn":"BCD","nameEn":"Bipolar-CMOS-DMOS","objectTypeName":"特色工艺平台","description":"功率集成电路特色工艺"},
+    {"nameCn":"LDMOS","nameEn":"Lateral Double-diffused MOSFET","objectTypeName":"特色工艺平台","description":"横向扩散MOS，RF/功率器件工艺"}
+  ]
+}

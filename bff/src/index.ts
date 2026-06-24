@@ -50,6 +50,7 @@ app.use('/api', (req, res, next) => {
 // ══════════════════════════════════════════════════════════════════════════════
 
 import aiRoutes from './routes/ai.js';
+import aiRouterRoutes from './routes/ai-router.js';
 import agentRoutes from './routes/agent.js';
 import researchAgentRoutes from './routes/research-agents.js';
 import objectExplorerRoutes from './routes/object-explorer.js';
@@ -62,6 +63,7 @@ import { initNeo4j, closeNeo4j } from './neo4j.js';
 
 // Body parsers only for AI routes
 app.use('/api/ai', express.json({ limit: '10mb' }));
+app.use('/api/ai/router', aiRouterRoutes);
 app.use('/api/ai', aiRoutes);
 app.use('/api/agent', express.json({ limit: '10mb' }));
 app.use('/api/agent', agentRoutes);

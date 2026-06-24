@@ -5,7 +5,12 @@
 - `frontend/`：React + TypeScript + Vite
 - `bff/`：Node.js + Express + TypeScript
 - `backend/`：Spring Boot 3 + MyBatis-Plus
-- `sql/`：数据库初始化、种子数据和全量快照
+- `mcp-client/`：Python LangChain Agent（MCP 客户端）
+- `skills/`：可复用的本体数据处理 Skill
+- `sql/`：数据库初始化、迁移脚本和全量快照
+- `data/`：本体 JSON、实例数据、原始输入文件
+- `scripts/`：Python 导入/导出/修复脚本（一次性脚本已归档到 `scripts/archive/`）
+- `docs/`：项目文档与参考资料
 
 ## 仓库地址
 
@@ -18,7 +23,7 @@
 
 为了避免开发环境出现“代码已更新，但数据库状态不一致”的问题，建议直接使用当前库导出的完整 SQL 快照：
 
-- 完整快照：[`sql/2026-04-16_ontology_full_snapshot.sql`](/Users/loopyotter/Documents/backup/claude_projects/ontology_platform/sql/2026-04-16_ontology_full_snapshot.sql)
+- 完整快照：[`sql/snapshots/ontology20260520.sql`](sql/snapshots/ontology20260520.sql)
 
 这份 SQL 以当前本地 `ontology` 数据库为准，已经包含：
 
@@ -51,13 +56,13 @@ CREATE DATABASE ontology CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 再执行完整快照 SQL：
 
 ```bash
-mysql --socket=/tmp/mysql.sock -uroot -p12345678 ontology < sql/2026-04-16_ontology_full_snapshot.sql
+mysql --socket=/tmp/mysql.sock -uroot -p12345678 ontology < sql/snapshots/ontology20260520.sql
 ```
 
 如果目标环境不是本地 socket，请改成对应的 host / port 方式，例如：
 
 ```bash
-mysql -h127.0.0.1 -P3306 -uroot -p12345678 ontology < sql/2026-04-16_ontology_full_snapshot.sql
+mysql -h127.0.0.1 -P3306 -uroot -p12345678 ontology < sql/snapshots/ontology20260520.sql
 ```
 
 ### 3. 安装依赖
@@ -148,6 +153,6 @@ DEEPSEEK_BASE_URL=https://api.deepseek.com
 
 `sql/` 目录中保留了历史增量脚本，但如果是新环境部署，优先建议直接使用：
 
-- `sql/2026-04-16_ontology_full_snapshot.sql`
+- `sql/snapshots/ontology20260520.sql`
 
 这样最不容易遗漏本地临时修正和种子数据差异。

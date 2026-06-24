@@ -259,9 +259,12 @@ router.post('/events/:id/analyze', async (req, res) => {
 
     const connection = await pool.getConnection();
     const [eventRows]: any = await connection.execute(`SELECT * FROM news_events WHERE id = ? AND project_id = ? LIMIT 1`, [req.params.id, projectId]);
-    const [companyRows]: any = await connection.execute(`SELECT company_id, name, stock_code, market, industry FROM company_entity`);
+    const [companyRows]: any = await connection.execute(
+      `SELECT company_id, name, stock_code, market, industry FROM company_entity`
+    );
     const [linkTypeRows]: any = await connection.execute(
-      `SELECT id, name, source_object_id, target_object_id FROM link_types WHERE source_object_id = 'company_entity' AND target_object_id = 'company_entity'`,
+      `SELECT id, name, source_object_id, target_object_id FROM link_types WHERE source_object_id = 'company_entity' AND target_object_id = 'company_entity' AND project_id = ?`,
+      [projectId],
     );
 
     if (eventRows.length === 0) {

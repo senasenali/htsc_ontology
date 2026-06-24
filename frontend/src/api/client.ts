@@ -285,8 +285,9 @@ export const api = {
     }),
 
   applyConversationOntology: (sessionId: string) =>
-    request<{ success: boolean; data: OntologyData }>(`/ai/conversation/${sessionId}/apply`, {
+    request<{ success: boolean; data: OntologyData }>(`/ai/router/apply`, {
       method: 'POST',
+      body: JSON.stringify({ sessionId }),
     }),
 
   // ── AI: Simple endpoints ───────────────────────────────────────────────────
@@ -754,6 +755,39 @@ export const api = {
     request<{ success: boolean; message: string }>('/neo4j/clear', {
       method: 'DELETE',
     }),
+
+  // ── Knowledge Base ───────────────────────────────────────────────────
+  getKnowledgeBaseList: (page: number = 1, size: number = 10, search?: string) => {
+    let url = `/knowledge-base?page=${page}&size=${size}`;
+    if (search) url += `&search=${encodeURIComponent(search)}`;
+    return request<{ success: boolean; data: KnowledgeBasePageData }>(url);
+  },
+
+  createKnowledgeBase: (data: { title: string; content?: string; sourceType?: string; sourceName?: string; authors?: string; entryDate?: string; refs?: KnowledgeBaseRef[] }) =>
+    request<{ success: boolean; data: KnowledgeBaseItem }>('/knowledge-base', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+
+  getKnowledgeBaseDetail: (id: number) =>
+    request<{ success: boolean; data: KnowledgeBaseDetail }>(`/knowledge-base/${id}`),
+
+  updateKnowledgeBase: (id: number, data: { title?: string; content?: string; sourceType?: string; sourceName?: string; authors?: string; entryDate?: string; refs?: KnowledgeBaseRef[] }) =>
+    request<{ success: boolean; data: KnowledgeBaseItem }>(`/knowledge-base/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    }),
+
+  deleteKnowledgeBase: (id: number) =>
+    request<{ success: boolean }>(`/knowledge-base/${id}`, {
+      method: 'DELETE',
+    }),
+
+  getKnowledgeBaseByObjectType: (objectTypeId: string) =>
+    request<{ success: boolean; data: { docs: KnowledgeBaseItem[]; refs: KnowledgeBaseRef[] } }>(`/knowledge-base/by-object-type/${objectTypeId}`),
+
+  getMarkedNodes: () =>
+    request<{ success: boolean; data: string[] }>('/knowledge-base/marked-nodes'),
 };
 
 // Notification type definition
@@ -826,4 +860,45 @@ export interface NewsPageData {
 export interface NewsListResponse {
   success: boolean;
   data: NewsPageData;
+}
+
+// ── Knowledge Base ────────────────────────────────────────────────────────
+
+export interface KnowledgeBaseRef {
+  id?: number;
+  docId?: number;
+  refObjectTypeId?: string;
+  refInstanceId?: string;
+  instanceName?: string;
+}
+
+export interface KnowledgeBaseItem {
+  id: number;
+  title: string;
+  content?: string;
+  sourceType?: string;
+  sourceName?: string;
+  authors?: string;
+  entryDate?: string;
+  projectId: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface KnowledgeBaseRecord {
+  doc: KnowledgeBaseItem;
+  refs: KnowledgeBaseRef[];
+}
+
+export interface KnowledgeBasePageData {
+  records: KnowledgeBaseRecord[];
+  total: number;
+  page: number;
+  size: number;
+  totalPages: number;
+}
+
+export interface KnowledgeBaseDetail {
+  doc: KnowledgeBaseItem;
+  refs: KnowledgeBaseRef[];
 }

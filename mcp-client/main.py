@@ -17,6 +17,7 @@ dotenv.load_dotenv()
 
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, create_model, Field
 
 from mcp import ClientSession
@@ -108,42 +109,35 @@ class MCPClient:
         logger.info("MCP Client disconnected")
 
     async def call_tool(self, name: str, arguments: dict) -> str:
-        """Call an MCP tool and return the text result. Auto-reconnects on connection error."""
-        if not self.session:
-            self.session = None  # ensure clean state
-            logger.info("No active MCP session, attempting connection...")
-            await self.connect()
+        """Call an MCP tool and return the text result. Full reconnect on error."""
+        for attempt in range(2):
             if not self.session:
-                raise RuntimeError("MCP session not initialized")
+                logger.info("No active MCP session, reconnecting...")
+                await self.connect()
+                if not self.session:
+                    raise RuntimeError("MCP session not initialized")
 
-        try:
-            result = await self.session.call_tool(name, arguments)
-        except Exception as e:
-            if "ClosedResourceError" in type(e).__name__ or "closed" in str(e).lower():
-                logger.warning(f"MCP connection lost, reconnecting... ({e})")
-                try:
+            try:
+                result = await self.session.call_tool(name, arguments)
+                if result.content:
+                    texts = []
+                    for c in result.content:
+                        if hasattr(c, "text"):
+                            texts.append(c.text)
+                        elif isinstance(c, dict):
+                            texts.append(json.dumps(c, ensure_ascii=False))
+                        else:
+                            texts.append(str(c))
+                    return "\n".join(texts)
+                return ""
+            except Exception as e:
+                if attempt == 0:
+                    logger.warning(f"Tool call failed (attempt 1), full reconnect... ({e})")
+                    await self._cleanup()
                     await self.connect()
-                    result = await self.session.call_tool(name, arguments)
-                except Exception as re:
-                    logger.error(f"Reconnection failed: {re}")
-                    raise RuntimeError(
-                        f"MCP server is unavailable. Please try again later."
-                    ) from re
-            else:
+                    continue
+                logger.error(f"Tool call failed after reconnect: {e}")
                 raise
-
-        if result.content and len(result.content) > 0:
-            # Extract text from TextContent objects
-            texts = []
-            for c in result.content:
-                if hasattr(c, "text"):
-                    texts.append(c.text)
-                elif isinstance(c, dict):
-                    texts.append(json.dumps(c, ensure_ascii=False))
-                else:
-                    texts.append(str(c))
-            return "\n".join(texts)
-        return ""
 
 # ── Global state ────────────────────────────────────────────────────────────────
 
@@ -156,10 +150,18 @@ sessions: dict = {}
 class ChatRequest(BaseModel):
     message: str
     session_id: Optional[str] = None
+    project_id: Optional[str] = "project_public"
 
 class ChatResponse(BaseModel):
     session_id: str
     response: str
+
+# ── Current request project context ──────────────────────────────────────────
+_current_project_id: str = "project_public"
+
+def set_current_project_id(pid: str):
+    global _current_project_id
+    _current_project_id = pid or "project_public"
 
 # ── Agent Setup ─────────────────────────────────────────────────────────────────
 
@@ -195,7 +197,9 @@ def build_agent(client: MCPClient):
         DynamicModel = create_model(f"{meta.name}_input", **field_defs)
 
         async def _dynamic_call(tool_name=meta.name, **kwargs) -> str:
-            # Filter out None values so the server uses its defaults
+            # Inject current project_id so MCP tools filter by project
+            if "projectId" not in kwargs or kwargs["projectId"] is None:
+                kwargs["projectId"] = _current_project_id
             filtered = {k: v for k, v in kwargs.items() if v is not None}
             return await client.call_tool(tool_name, filtered)
 
@@ -214,13 +218,24 @@ def build_agent(client: MCPClient):
         for i, t in enumerate(client.tools_meta)
     )
 
-    system_prompt = f"""你是一个本体图谱专家助手。
-你有以下工具可以帮助用户查询和探索本体图谱数据：
+    system_prompt = f"""你是一个本体图谱智能解析助手，负责解析非结构化信息并与图谱节点匹配。保存操作由前端处理，你只需输出解析结果。
+你有以下工具可以帮助用户：
 
 {tool_descriptions}
 
-请根据用户的问题，选择合适的工具来回答。
-请用中文回答，并尽量详细地展示查询到的数据。对于 JSON 格式的返回结果，请整理成易于阅读的格式展示给用户。"""
+信息解析流程：
+当用户提供一段需挂载到图谱的信息（如新闻文章、行业动态、报告、笔记等）时：
+1. 先用 queryConceptGraph 搜索并确定关联的对象类型节点（提取关键词进行搜索），仅使用 queryConceptGraph 即可，不需要调用 queryInstanceGraph
+2. 在回答末尾，用以下 JSON 代码块格式输出提取的结构化数据（不要调用 saveKnowledgeEntry 或 queryInstanceGraph）：
+   ```json
+   {{{{"title": "资讯标题", "content": "正文", "sourceType": "industry_news", "sourceName": "来源说明", "authors": "作者", "entryDate": "2026-06-02T00:00:00", "nodeRefs": [{{"objectTypeId": "匹配的节点ID", "instanceId": "", "instanceName": "节点显示名称"}}]}}}}
+   ```
+   sourceType 可选值: industry_news / meeting_minutes / tech_report / internal_note / other
+   nodeRefs 中 objectTypeId 是必填（填入查到的对象类型 ID），instanceName 是节点名称（可选）
+   注意：输出 JSON 代码块后不要再向用户提问或要求确认，用户会自动看到保存按钮。
+
+如果用户只是查询本体信息，则直接回答即可。
+请用中文回答。"""
 
     agent = create_agent(
         model=llm,
@@ -286,6 +301,9 @@ async def chat(request: ChatRequest):
         else:
             chat_history.append(AIMessage(content=msg["content"]))
 
+    # Set project context for tool calls
+    set_current_project_id(request.project_id)
+
     try:
         result = await agent_executor.ainvoke({
             "messages": chat_history + [HumanMessage(content=request.message)],
@@ -308,6 +326,88 @@ async def chat(request: ChatRequest):
         tb = traceback.format_exc()
         logger.error(f"Agent error: {e}\n{tb}")
         raise HTTPException(status_code=500, detail=str(e) or repr(e))
+
+@app.post("/api/chat/stream")
+async def chat_stream(request: ChatRequest):
+    if not agent_executor:
+        raise HTTPException(status_code=503, detail="Agent not ready")
+
+    session_id = request.session_id or str(uuid.uuid4())
+
+    if session_id not in sessions:
+        sessions[session_id] = {"id": session_id, "history": []}
+    session = sessions[session_id]
+
+    chat_history = []
+    for msg in session["history"]:
+        if msg["role"] == "user":
+            chat_history.append(HumanMessage(content=msg["content"]))
+        else:
+            chat_history.append(AIMessage(content=msg["content"]))
+
+    set_current_project_id(request.project_id)
+
+    async def event_stream():
+        full_response = ""
+        try:
+            async for event in agent_executor.astream_events(
+                {"messages": chat_history + [HumanMessage(content=request.message)]},
+                version="v2",
+            ):
+                kind = event.get("event", "")
+
+                # Token streaming from the LLM
+                if kind == "on_chat_model_stream":
+                    chunk = event.get("data", {}).get("chunk", None)
+                    if chunk and hasattr(chunk, "content") and chunk.content:
+                        full_response += chunk.content
+                        yield f"data: {json.dumps({'type': 'token', 'content': chunk.content})}\n\n"
+
+                # Tool start notification
+                elif kind == "on_tool_start":
+                    tool_name = event.get("name", "unknown")
+                    tool_input = event.get("data", {}).get("input", {})
+                    yield f"data: {json.dumps({'type': 'tool_start', 'tool': tool_name, 'input': str(tool_input)[:200]})}\n\n"
+
+                # Tool end notification
+                elif kind == "on_tool_end":
+                    tool_name = event.get("name", "unknown")
+                    output = event.get("data", {}).get("output", "")
+                    output_str = str(output)[:200] if output else ""
+                    yield f"data: {json.dumps({'type': 'tool_end', 'tool': tool_name, 'output': output_str})}\n\n"
+
+                # Capture final output from the AgentExecutor chain end
+                if kind == "on_chain_end":
+                    output_data = event.get("data", {}).get("output", {})
+                    if isinstance(output_data, dict) and "messages" in output_data:
+                        messages = output_data.get("messages", [])
+                        if messages and len(messages) > 0:
+                            last = messages[-1]
+                            content = last.content if hasattr(last, "content") else str(last)
+                            if content and content.strip():
+                                full_response = content
+
+            # Store in session history
+            session["history"].append({"role": "user", "content": request.message})
+            session["history"].append({"role": "assistant", "content": full_response})
+            if len(session["history"]) > 20:
+                session["history"] = session["history"][-20:]
+
+            yield f"data: {json.dumps({'type': 'done', 'fullContent': full_response, 'session_id': session_id})}\n\n"
+
+        except Exception as e:
+            yield f"data: {json.dumps({'type': 'error', 'content': str(e)})}\n\n"
+            import traceback
+            logger.error(f"Stream error: {traceback.format_exc()}")
+    return StreamingResponse(
+        event_stream(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+            "X-Accel-Buffering": "no",
+        },
+    )
 
 if __name__ == "__main__":
     import uvicorn

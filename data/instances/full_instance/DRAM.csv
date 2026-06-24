@@ -1,0 +1,15 @@
+﻿nameCn,nameEn,objectTypeName,description
+CXMT DDR5,,DRAM,CXMT DDR5 chips and modules.
+CXMT LPDDR5/5X,,DRAM,CXMT LPDDR5/5X low-power DRAM product family.
+GigaDevice DDR4 SDRAM,,DRAM,GigaDevice DDR4 DRAM product family.
+GigaDevice niche DRAM,,DRAM,GigaDevice specialty/niche DRAM product family.
+Micron DDR5 SDRAM,,DRAM,Micron DDR5 SDRAM product family.
+Micron DDR5 memory,,DRAM,Micron DDR5 memory product family.
+Micron GDDR7 graphics memory,,DRAM,Micron GDDR7 memory for graphics and AI workloads.
+Nanya DDR5 DRAM,,DRAM,Nanya standard DDR5 DRAM product family.
+Nanya LPDDR5/5X DRAM,,DRAM,Nanya low-power LPDDR5/5X DRAM product family.
+SK hynix DDR5 DRAM,,DRAM,SK hynix DDR5 DRAM product family.
+SK hynix LPDDR5T DRAM,,DRAM,SK hynix low-power DRAM generation applied to high-end products.
+Samsung DDR5 DRAM,,DRAM,Samsung DDR5 DRAM product family.
+Samsung DRAM,,DRAM,Samsung DRAM memory product family.
+Samsung GDDR7 DRAM,,DRAM,Samsung 24Gb GDDR7 DRAM product/technology generation.

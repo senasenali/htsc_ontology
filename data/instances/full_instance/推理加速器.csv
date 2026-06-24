@@ -1,0 +1,11 @@
+﻿nameCn,nameEn,objectTypeName,description
+AMD Instinct MI325X,,推理加速器,AMD accelerator for training and inference.
+AMD Instinct MI350 Series,,推理加速器,AMD accelerator series for generative AI and inference.
+Cambricon MLU370-S4,,推理加速器,Cambricon cloud inference AI accelerator card.
+Cambricon MLU370-S4 cloud inference AI accelerator,,推理加速器,Cambricon MLU370-S4 cloud inference AI accelerator card.
+Cambricon MLU370-X4,,推理加速器,Cambricon cloud AI accelerator card for training/inference.
+Huawei Ascend 310 AI Processor,,推理加速器,Huawei Ascend inference AI processor.
+Huawei Ascend 910 AI Processor,,推理加速器,Huawei Ascend AI processor used across training and inference systems.
+Intel Gaudi 3 AI Accelerator,,推理加速器,Intel AI accelerator for inference and training.
+NVIDIA B200 Tensor Core GPU,,推理加速器,Blackwell-generation accelerator for high-throughput inference.
+NVIDIA H200 Tensor Core GPU,,推理加速器,Data-center GPU used for AI inference and HPC.

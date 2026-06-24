@@ -1,0 +1,8 @@
+﻿nameCn,nameEn,objectTypeName,description,property.resolution_limit,property.wafer_cost_impact,property.wavelength
+ArF,ArF,光刻技术,第四代深紫外光源光刻技术，准分子激光ArF（193nm），步进扫描投影式/浸没式曝光，制程130-14nm，目前最主流的量产光刻技术,14,高（先进制程主力）,193
+DUV,DUV,光刻技术,深紫外光刻,,,
+EUV,EUV,光刻技术,极紫外光刻，7nm及以下制程关键,,,
+G-line,G-line,光刻技术,第一代紫外光源光刻技术，采用汞灯的G线（438nm），接触式/接近式曝光,800,低端已淘汰,438
+High-NA EUV,High-NA EUV,光刻技术,高数值孔径EUV，3nm以下制程关键,,,
+I-line,I-line,光刻技术,第二代紫外光源光刻技术，采用汞灯的I线（365nm），接触式/接近式曝光，制程800-250nm,250,低端,365
+KrF,KrF,光刻技术,第三代深紫外光源光刻技术，准分子激光KrF（248nm），扫描投影式曝光，制程180-130nm,130,成熟，成本适中,248

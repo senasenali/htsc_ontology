@@ -1,0 +1,20 @@
+﻿nameCn,nameEn,objectTypeName,description
+APD,Avalanche Photodiode,光互连技术,雪崩光电探测器
+AWG,Arrayed Waveguide Grating,光互连技术,阵列波导光栅
+CPO,Co-Packaged Optics,光互连技术,共封装光学，将光引擎与交换芯片共封装
+DFB,Distributed Feedback Laser,光互连技术,分布式反馈激光器
+DWDM,Dense WDM,光互连技术,密集波分复用
+EDFA,Erbium-Doped Fiber Amplifier,光互连技术,掺铒光纤放大器
+EML,Electro-absorption Modulated Laser,光互连技术,电吸收调制激光器
+LWDM,LAN-WDM,光互连技术,局域网波分复用
+NPO,Near-Package Optics,光互连技术,近封装光学
+PLC,Planar Lightwave Circuit,光互连技术,平面光波回路
+SPAD,Single-Photon Avalanche Diode,光互连技术,单光子雪崩二极管
+SiPM,Silicon Photomultiplier,光互连技术,硅光电倍增器
+VCSEL,Vertical-Cavity Surface-Emitting Laser,光互连技术,垂直腔面发射激光器
+WDM,Wavelength Division Multiplexing,光互连技术,波分复用
+光互连,Optical Interconnect,光互连技术,光信号互连
+光引擎,Optical Engine,光互连技术,CPO中的光收发引擎
+微环,Microring,光互连技术,微环谐振器
+硅光,Silicon Photonics,光互连技术,硅基光电子集成
+调制器,Modulator,光互连技术,光调制器

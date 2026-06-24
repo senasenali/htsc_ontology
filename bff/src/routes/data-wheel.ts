@@ -4,6 +4,10 @@ import { pool } from '../db.js';
 
 const router = Router();
 
+function getProjectId(req: any): string {
+  return (req.query?.projectId as string) || 'project_public';
+}
+
 const DEEPSEEK_API_KEY = process.env.DEEPSEEK_API_KEY;
 const DEEPSEEK_BASE_URL = process.env.DEEPSEEK_BASE_URL || 'https://api.deepseek.com';
 const JAVA_BACKEND = process.env.JAVA_BACKEND_URL || 'http://localhost:8080';
@@ -15,7 +19,7 @@ function checkAI(): boolean {
 
 // ── Fetch current ontology from MySQL ────────────────────────────────────────
 
-async function fetchCurrentOntology(): Promise<{
+async function fetchCurrentOntology(projectId: string): Promise<{
   objectTypes: any[];
   linkTypes: any[];
   instances: Record<string, any[]>;
@@ -23,15 +27,17 @@ async function fetchCurrentOntology(): Promise<{
 }> {
   const connection = await pool.getConnection();
   try {
-    // 1. Object types
+    // 1. Object types (filtered by project_id)
     const [otRows] = await connection.execute(
-      'SELECT id, name, description, backing_dataset, parent_object_type FROM object_types ORDER BY name'
+      'SELECT id, name, description, backing_dataset, parent_object_type FROM object_types WHERE project_id = ? ORDER BY name',
+      [projectId]
     );
     const objectTypes = otRows as any[];
 
-    // 2. Link types
+    // 2. Link types (filtered by project_id)
     const [ltRows] = await connection.execute(
-      'SELECT id, name, source_object_id, target_object_id, cardinality, description FROM link_types ORDER BY name'
+      'SELECT id, name, source_object_id, target_object_id, cardinality, description FROM link_types WHERE project_id = ? ORDER BY name',
+      [projectId]
     );
     const linkTypes = ltRows as any[];
 
@@ -46,18 +52,23 @@ async function fetchCurrentOntology(): Promise<{
         );
         instances[ot.name] = instRows as any[];
       } catch (e) {
-        // Table may not exist yet
         instances[ot.name] = [];
       }
     }
 
-    // 4. Link instance data (top 50)
-    const [liRows] = await connection.execute(
-      'SELECT link_type_id, source_instance_id, target_instance_id FROM link_instance_data ORDER BY id DESC LIMIT 50'
-    );
-    const linkInstances = liRows as any[];
+    // 4. Link instance data (top 50) - no direct project_id, but scoped via object types in the project
+    const otIds = objectTypes.map((ot: any) => ot.id);
+    if (otIds.length > 0) {
+      const placeholders = otIds.map(() => '?').join(',');
+      const [liRows] = await connection.execute(
+        `SELECT li.link_type_id, li.source_instance_id, li.target_instance_id FROM link_instance_data li JOIN link_types lt ON li.link_type_id = lt.id WHERE lt.project_id = ? ORDER BY li.id DESC LIMIT 50`,
+        [projectId]
+      );
+      const linkInstances = liRows as any[];
+      return { objectTypes, linkTypes, instances, linkInstances };
+    }
 
-    return { objectTypes, linkTypes, instances, linkInstances };
+    return { objectTypes, linkTypes, instances, linkInstances: [] };
   } finally {
     connection.release();
   }
@@ -191,15 +202,16 @@ router.post('/extract', async (req, res) => {
   }
 
   try {
+    const projectId = getProjectId(req);
     const { title, content } = req.body;
     if (!title || !content) {
       return res.status(400).json({ error: 'Title and content are required' });
     }
 
-    // Fetch current ontology from database
+    // Fetch current ontology from database (scoped to project)
     let contextStr = '';
     try {
-      const currentOntology = await fetchCurrentOntology();
+      const currentOntology = await fetchCurrentOntology(projectId);
       contextStr = buildOntologyContext(currentOntology);
     } catch (e: any) {
       console.warn('[DataWheel] Failed to fetch current ontology:', e.message);
@@ -311,12 +323,13 @@ router.post('/extract', async (req, res) => {
 
 router.post('/analyze', async (req, res) => {
   try {
+    const projectId = getProjectId(req);
     const { extracted } = req.body;
     if (!extracted) {
       return res.status(400).json({ error: 'Extracted data is required' });
     }
 
-    const currentOntology = await fetchCurrentOntology();
+    const currentOntology = await fetchCurrentOntology(projectId);
 
     // Build lookup maps
     const existingOtMap = new Map<string, any>();

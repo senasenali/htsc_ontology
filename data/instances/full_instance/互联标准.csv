@@ -1,0 +1,8 @@
+﻿nameCn,nameEn,objectTypeName,description
+AIB,Advanced Interface Bus,互联标准,高级接口总线（Intel Die-to-Die）
+BoW,Bridge of Wires,互联标准,简易桥接Die-to-Die标准
+CCIX,Cache Coherent Interconnect for Accelerators,互联标准,加速器缓存一致性互连
+CXL,Compute Express Link,互联标准,计算快速链接，存算分离接口
+InfiniBand,InfiniBand,互联标准,高性能计算互连网络
+PCIe,PCI Express,互联标准,通用外设互连标准
+UCIe,Universal Chiplet Interconnect Express,互联标准,通用芯粒互连标准

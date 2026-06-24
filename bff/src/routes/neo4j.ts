@@ -4,18 +4,23 @@ import { getSession } from '../neo4j.js';
 
 const router = Router();
 
+function getProjectId(req: any): string {
+  return (req.query?.projectId as string) || 'project_public';
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Internal sync functions (reusable, no HTTP self-call)
 // ─────────────────────────────────────────────────────────────────────────────
 
 /** 1. 同步对象类型 -> Neo4j 节点 (Label: ObjectType)
  *  并同步父子继承关系 (-[:SUBTYPE_OF]->) */
-async function syncObjectTypesInternal(): Promise<{ created: number; subtypes: number }> {
+async function syncObjectTypesInternal(projectId: string): Promise<{ created: number; subtypes: number }> {
   const connection = await pool.getConnection();
   let objectTypes: any[] = [];
   try {
     const [rows]: any = await connection.execute(
-      'SELECT id, name, description, backing_dataset, data_source, database_name, parent_object_type, icon, industry_id FROM object_types ORDER BY created_at'
+      'SELECT id, name, description, backing_dataset, data_source, database_name, parent_object_type, icon, industry_id FROM object_types WHERE project_id = ? ORDER BY created_at',
+      [projectId]
     );
     objectTypes = rows;
   } finally {
@@ -102,12 +107,13 @@ async function syncObjectTypesInternal(): Promise<{ created: number; subtypes: n
 }
 
 /** 2. 同步链接类型 -> Neo4j 节点 (Label: LinkType) + ObjectType 间 LINKS_TO 关系 */
-async function syncLinkTypesInternal(): Promise<{ created: number }> {
+async function syncLinkTypesInternal(projectId: string): Promise<{ created: number }> {
   const connection = await pool.getConnection();
   let linkTypes: any[] = [];
   try {
     const [rows]: any = await connection.execute(
-      'SELECT id, name, description, source_object_id, target_object_id, source_column, target_column, cardinality, industry_id FROM link_types ORDER BY created_at'
+      'SELECT id, name, description, source_object_id, target_object_id, source_column, target_column, cardinality, industry_id FROM link_types WHERE project_id = ? ORDER BY created_at',
+      [projectId]
     );
     linkTypes = rows;
   } finally {
@@ -338,9 +344,10 @@ async function syncLinkInstancesForLinkType(linkTypeId: string): Promise<{ creat
 // HTTP Routes
 // ─────────────────────────────────────────────────────────────────────────────
 
-router.post('/sync/object-types', async (_req, res) => {
+router.post('/sync/object-types', async (req, res) => {
   try {
-    const stats = await syncObjectTypesInternal();
+    const projectId = getProjectId(req);
+    const stats = await syncObjectTypesInternal(projectId);
     res.json({
       success: true,
       message: `同步完成: ${stats.created} 个对象类型, ${stats.subtypes} 条父子继承关系`,
@@ -352,9 +359,10 @@ router.post('/sync/object-types', async (_req, res) => {
   }
 });
 
-router.post('/sync/link-types', async (_req, res) => {
+router.post('/sync/link-types', async (req, res) => {
   try {
-    const stats = await syncLinkTypesInternal();
+    const projectId = getProjectId(req);
+    const stats = await syncLinkTypesInternal(projectId);
     res.json({
       success: true,
       message: `同步完成: ${stats.created} 个链接类型`,
@@ -399,6 +407,7 @@ router.post('/sync/link-instances/:linkTypeId', async (req, res) => {
 /** 全量同步：直接函数调用，不再走 HTTP 自调用 */
 router.post('/sync/all', async (req, res) => {
   const { clearFirst } = req.body || {};
+  const projectId = getProjectId(req);
 
   try {
     const summary: any = {
@@ -421,16 +430,16 @@ router.post('/sync/all', async (req, res) => {
     }
 
     // 1. 对象类型
-    summary.objectTypes = await syncObjectTypesInternal();
+    summary.objectTypes = await syncObjectTypesInternal(projectId);
 
     // 2. 链接类型 (依赖 ObjectType 节点已存在)
-    summary.linkTypes = await syncLinkTypesInternal();
+    summary.linkTypes = await syncLinkTypesInternal(projectId);
 
     // 3. 所有对象类型的实例 (依赖 ObjectType 节点已存在)
     const conn1 = await pool.getConnection();
     let objectTypeIds: string[] = [];
     try {
-      const [rows]: any = await conn1.execute('SELECT id FROM object_types');
+      const [rows]: any = await conn1.execute('SELECT id FROM object_types WHERE project_id = ?', [projectId]);
       objectTypeIds = rows.map((r: any) => r.id);
     } finally {
       conn1.release();
@@ -452,7 +461,7 @@ router.post('/sync/all', async (req, res) => {
     const conn2 = await pool.getConnection();
     let linkTypeIds: string[] = [];
     try {
-      const [rows]: any = await conn2.execute('SELECT id FROM link_types');
+      const [rows]: any = await conn2.execute('SELECT id FROM link_types WHERE project_id = ?', [projectId]);
       linkTypeIds = rows.map((r: any) => r.id);
     } finally {
       conn2.release();
