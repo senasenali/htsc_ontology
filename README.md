@@ -14,8 +14,8 @@
 
 ## 仓库地址
 
-- GitHub: [https://github.com/lmh450201598/ontology_platform](https://github.com/lmh450201598/ontology_platform)
-- 当前工作分支：`codex/next-feature-dev`
+- GitHub: [https://github.com/senasenali/htsc_ontology](https://github.com/senasenali/htsc_ontology)
+- 当前工作分支：`main`
 
 ## 本次交付重点
 
@@ -38,19 +38,18 @@
 ### 1. 拉取代码
 
 ```bash
-git clone https://github.com/lmh450201598/ontology_platform.git
-cd ontology_platform
-git checkout codex/next-feature-dev
+git clone https://github.com/senasenali/htsc_ontology.git
+cd htsc_ontology
 ```
 
 如果后续将当前分支合并到其他分支，请以实际部署分支为准。
 
 ### 2. 初始化数据库
 
-先确保 MySQL 可用，然后创建空库：
+先确保 MySQL 可用，然后执行项目数据库配置脚本：
 
-```sql
-CREATE DATABASE ontology CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+```bash
+mysql -uroot -p < sql/init/project_database_config.sql
 ```
 
 再执行完整快照 SQL：
@@ -113,7 +112,7 @@ npm run dev
 
 后端数据库配置在：
 
-- [`backend/src/main/resources/application.yml`](/Users/loopyotter/Documents/backup/claude_projects/ontology_platform/backend/src/main/resources/application.yml)
+- [`backend/src/main/resources/application.yml`](backend/src/main/resources/application.yml)
 
 默认值：
 

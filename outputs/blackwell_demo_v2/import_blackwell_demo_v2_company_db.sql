@@ -221,62 +221,6 @@ CREATE TABLE IF NOT EXISTS `backend_facility` (
   UNIQUE KEY `uk_unique_id` (`unique_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-CREATE TABLE IF NOT EXISTS `abf_substrate` (
-  `id` bigint NOT NULL AUTO_INCREMENT,
-  `name` varchar(500) DEFAULT NULL,
-  `unique_id` varchar(500) DEFAULT NULL,
-  `description` text,
-  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
-  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  `dielectric_material` text NULL,
-  `demand_driver` text NULL,
-  `source_url` text NULL,
-  PRIMARY KEY (`id`),
-  UNIQUE KEY `uk_unique_id` (`unique_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-CREATE TABLE IF NOT EXISTS `flip_chip_bonding_equipment` (
-  `id` bigint NOT NULL AUTO_INCREMENT,
-  `name` varchar(500) DEFAULT NULL,
-  `unique_id` varchar(500) DEFAULT NULL,
-  `description` text,
-  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
-  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  `equipment_category` text NULL,
-  `supported_process` text NULL,
-  `source_url` text NULL,
-  PRIMARY KEY (`id`),
-  UNIQUE KEY `uk_unique_id` (`unique_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-CREATE TABLE IF NOT EXISTS `hybrid_bonding_equipment` (
-  `id` bigint NOT NULL AUTO_INCREMENT,
-  `name` varchar(500) DEFAULT NULL,
-  `unique_id` varchar(500) DEFAULT NULL,
-  `description` text,
-  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
-  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  `equipment_category` text NULL,
-  `supported_process` text NULL,
-  `source_url` text NULL,
-  PRIMARY KEY (`id`),
-  UNIQUE KEY `uk_unique_id` (`unique_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-CREATE TABLE IF NOT EXISTS `wafer_thinning_equipment` (
-  `id` bigint NOT NULL AUTO_INCREMENT,
-  `name` varchar(500) DEFAULT NULL,
-  `unique_id` varchar(500) DEFAULT NULL,
-  `description` text,
-  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
-  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  `equipment_category` text NULL,
-  `supported_process` text NULL,
-  `source_url` text NULL,
-  PRIMARY KEY (`id`),
-  UNIQUE KEY `uk_unique_id` (`unique_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
 CREATE TABLE IF NOT EXISTS `capital_expenditure` (
   `id` bigint NOT NULL AUTO_INCREMENT,
   `name` varchar(500) DEFAULT NULL,
@@ -328,10 +272,6 @@ UPDATE object_types SET backing_dataset = 'advanced_packaging_technology' WHERE 
 UPDATE object_types SET backing_dataset = 'packaging_solution' WHERE project_id = @project_id AND id = 'packaging_solution';
 UPDATE object_types SET backing_dataset = 'assembly_test_service' WHERE project_id = @project_id AND id = 'assembly_test_service';
 UPDATE object_types SET backing_dataset = 'backend_facility' WHERE project_id = @project_id AND id = 'backend_facility';
-UPDATE object_types SET backing_dataset = 'abf_substrate' WHERE project_id = @project_id AND id = 'abf_substrate';
-UPDATE object_types SET backing_dataset = 'flip_chip_bonding_equipment' WHERE project_id = @project_id AND id = 'flip_chip_bonding_equipment';
-UPDATE object_types SET backing_dataset = 'hybrid_bonding_equipment' WHERE project_id = @project_id AND id = 'hybrid_bonding_equipment';
-UPDATE object_types SET backing_dataset = 'wafer_thinning_equipment' WHERE project_id = @project_id AND id = 'wafer_thinning_equipment';
 UPDATE object_types SET backing_dataset = 'capital_expenditure' WHERE project_id = @project_id AND id = 'capital_expenditure';
 UPDATE object_types SET backing_dataset = 'ai_server_application' WHERE project_id = @project_id AND id = 'ai_server_application';
 
@@ -341,14 +281,7 @@ INSERT INTO `company` (`unique_id`, `name`, `description`, `company_category`, `
 ('obj_company_tsmc', '台积电', 'Foundry and CoWoS advanced packaging provider for leading AI chips.', 'Foundry and advanced packaging provider', 'Taiwan, China', 'https://www.tsmc.com/english/dedicatedFoundry/technology/logic/l_3dfabric'),
 ('obj_company_skhynix', 'SK海力士', 'HBM3E supplier.', 'Memory supplier', 'Korea', 'https://www.skhynix.com/product/hbm3e.go'),
 ('obj_company_micron', '美光科技', 'HBM3E supplier.', 'Memory supplier', 'United States', 'https://www.micron.com/products/memory/hbm/hbm3e'),
-('obj_company_samsung_electronics', '三星电子', 'HBM supplier candidate.', 'Memory supplier', 'Korea', 'https://www.skhynix.com/product/hbm3e.go'),
-('obj_company_ibiden', '揖斐电', 'ABF substrate supplier.', 'IC substrate supplier', 'Japan', 'https://semiwiki.com/semiconductor-services/semiconductor-packaging/335318-understanding-tsmcs-cowos-l-packaging/'),
-('obj_company_unimicron', '欣兴电子', 'ABF substrate supplier.', 'IC substrate supplier', 'Taiwan, China', 'https://semiwiki.com/semiconductor-services/semiconductor-packaging/335318-understanding-tsmcs-cowos-l-packaging/'),
-('obj_company_shinko', '新光电气', 'ABF substrate supplier.', 'IC substrate supplier', 'Japan', 'https://semiwiki.com/semiconductor-services/semiconductor-packaging/335318-understanding-tsmcs-cowos-l-packaging/'),
-('obj_company_besi', 'BESI', 'Advanced bonding equipment supplier.', 'Semiconductor equipment supplier', 'Netherlands', 'https://semiwiki.com/semiconductor-services/semiconductor-packaging/335318-understanding-tsmcs-cowos-l-packaging/'),
-('obj_company_asmpt', 'ASMPT', 'Advanced bonding equipment supplier.', 'Semiconductor equipment supplier', 'Hong Kong, China', 'https://semiwiki.com/semiconductor-services/semiconductor-packaging/335318-understanding-tsmcs-cowos-l-packaging/'),
-('obj_company_kulicke_soffa', 'K&S', 'Bonding equipment supplier.', 'Semiconductor equipment supplier', 'United States', 'https://semiwiki.com/semiconductor-services/semiconductor-packaging/335318-understanding-tsmcs-cowos-l-packaging/'),
-('obj_company_disco', 'DISCO', 'Wafer thinning and dicing equipment supplier.', 'Semiconductor equipment supplier', 'Japan', 'https://semiwiki.com/semiconductor-services/semiconductor-packaging/335318-understanding-tsmcs-cowos-l-packaging/')
+('obj_company_samsung_electronics', '三星电子', 'HBM supplier candidate.', 'Memory supplier', 'Korea', 'https://www.skhynix.com/product/hbm3e.go')
 ON DUPLICATE KEY UPDATE `name` = VALUES(`name`), `description` = VALUES(`description`), `company_category` = VALUES(`company_category`), `country_region` = VALUES(`country_region`), `source_url` = VALUES(`source_url`);
 
 INSERT INTO `graphics_processing_unit` (`unique_id`, `name`, `description`, `compute_die_count`, `transistor_count_billion`, `die_to_die_bandwidth_tbps`, `source_url`) VALUES
@@ -409,22 +342,6 @@ ON DUPLICATE KEY UPDATE `name` = VALUES(`name`), `description` = VALUES(`descrip
 INSERT INTO `backend_facility` (`unique_id`, `name`, `description`, `country_region`, `city_or_site`, `facility_type`, `status`, `source_url`) VALUES
 ('obj_facility_tsmc_ap6', '台积电CoWoS后道产能', 'TSMC backend capacity associated with CoWoS advanced packaging expansion.', 'Taiwan, China', 'Taiwan sites', 'advanced packaging backend facility', 'capacity expansion', 'https://www.semi.org/en/blogs/technology-trends/tsmc-cowos-advanced-packaging')
 ON DUPLICATE KEY UPDATE `name` = VALUES(`name`), `description` = VALUES(`description`), `country_region` = VALUES(`country_region`), `city_or_site` = VALUES(`city_or_site`), `facility_type` = VALUES(`facility_type`), `status` = VALUES(`status`), `source_url` = VALUES(`source_url`);
-
-INSERT INTO `abf_substrate` (`unique_id`, `name`, `description`, `dielectric_material`, `demand_driver`, `source_url`) VALUES
-('obj_abf_substrate', 'AI加速器ABF载板', 'Large-size ABF substrate used by high-end AI accelerator packages.', 'Ajinomoto build-up film', 'larger package size and advanced packaging demand', 'https://semiwiki.com/semiconductor-services/semiconductor-packaging/335318-understanding-tsmcs-cowos-l-packaging/')
-ON DUPLICATE KEY UPDATE `name` = VALUES(`name`), `description` = VALUES(`description`), `dielectric_material` = VALUES(`dielectric_material`), `demand_driver` = VALUES(`demand_driver`), `source_url` = VALUES(`source_url`);
-
-INSERT INTO `flip_chip_bonding_equipment` (`unique_id`, `name`, `description`, `equipment_category`, `supported_process`, `source_url`) VALUES
-('obj_equipment_flip_chip_bonder', 'AI封装倒装键合机', 'Flip-chip bonding equipment used in advanced packaging assembly.', 'flip-chip bonding', 'die attach / chip placement for advanced package', 'https://semiwiki.com/semiconductor-services/semiconductor-packaging/335318-understanding-tsmcs-cowos-l-packaging/')
-ON DUPLICATE KEY UPDATE `name` = VALUES(`name`), `description` = VALUES(`description`), `equipment_category` = VALUES(`equipment_category`), `supported_process` = VALUES(`supported_process`), `source_url` = VALUES(`source_url`);
-
-INSERT INTO `hybrid_bonding_equipment` (`unique_id`, `name`, `description`, `equipment_category`, `supported_process`, `source_url`) VALUES
-('obj_equipment_hybrid_bonder', '先进封装混合键合机', 'Hybrid bonding equipment relevant to advanced interconnect density.', 'hybrid bonding', 'wafer-to-wafer / die-to-wafer bonding', 'https://semiwiki.com/semiconductor-services/semiconductor-packaging/335318-understanding-tsmcs-cowos-l-packaging/')
-ON DUPLICATE KEY UPDATE `name` = VALUES(`name`), `description` = VALUES(`description`), `equipment_category` = VALUES(`equipment_category`), `supported_process` = VALUES(`supported_process`), `source_url` = VALUES(`source_url`);
-
-INSERT INTO `wafer_thinning_equipment` (`unique_id`, `name`, `description`, `equipment_category`, `supported_process`, `source_url`) VALUES
-('obj_equipment_wafer_thinning', 'HBM/先进封装晶圆减薄机', 'Wafer thinning equipment used in HBM and advanced packaging process flows.', 'wafer thinning', 'backgrind / thinning for stacked memory and packaging', 'https://semiwiki.com/semiconductor-services/semiconductor-packaging/335318-understanding-tsmcs-cowos-l-packaging/')
-ON DUPLICATE KEY UPDATE `name` = VALUES(`name`), `description` = VALUES(`description`), `equipment_category` = VALUES(`equipment_category`), `supported_process` = VALUES(`supported_process`), `source_url` = VALUES(`source_url`);
 
 INSERT INTO `capital_expenditure` (`unique_id`, `name`, `description`, `capex_amount`, `currency`, `period`, `capex_category`, `region`, `capacity_or_technology_purpose`, `source_url`) VALUES
 ('obj_metric_tsmc_adv_packaging_capex', '台积电先进封装扩产资本开支', 'Capital expenditure associated with advanced packaging and CoWoS capacity expansion.', 'not specified', 'USD/TWD', '2024-2026', 'advanced packaging capacity expansion', 'Taiwan, China', 'CoWoS and AI accelerator package capacity', 'https://www.semi.org/en/blogs/technology-trends/tsmc-cowos-advanced-packaging')
@@ -521,38 +438,6 @@ ON DUPLICATE KEY UPDATE name=VALUES(name), source_object_id=VALUES(source_object
 
 INSERT INTO link_types (id, name, source_object_id, target_object_id, cardinality, link_category, description, industry_id, source_column, target_column, status, project_id, created_at, updated_at)
 VALUES ('lt_backend_facility_produces_for_assembly_test_service', '后道工厂生产供给封装测试服务', 'backend_facility', 'assembly_test_service', 'M:N', '技术关联', 'Blackwell demo v2: 已有/确保存在', NULL, NULL, NULL, 'active', @project_id, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-ON DUPLICATE KEY UPDATE name=VALUES(name), source_object_id=VALUES(source_object_id), target_object_id=VALUES(target_object_id), link_category=VALUES(link_category), description=VALUES(description), status='active', updated_at=CURRENT_TIMESTAMP;
-
-INSERT INTO link_types (id, name, source_object_id, target_object_id, cardinality, link_category, description, industry_id, source_column, target_column, status, project_id, created_at, updated_at)
-VALUES ('lt_abf_substrate_supplies_to_graphics_processing_unit', 'ABF载板供给于GPU', 'abf_substrate', 'graphics_processing_unit', 'M:N', '技术关联', 'Blackwell demo v2: 已有/确保存在', NULL, NULL, NULL, 'active', @project_id, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-ON DUPLICATE KEY UPDATE name=VALUES(name), source_object_id=VALUES(source_object_id), target_object_id=VALUES(target_object_id), link_category=VALUES(link_category), description=VALUES(description), status='active', updated_at=CURRENT_TIMESTAMP;
-
-INSERT INTO link_types (id, name, source_object_id, target_object_id, cardinality, link_category, description, industry_id, source_column, target_column, status, project_id, created_at, updated_at)
-VALUES ('lt_company_produces_for_abf_substrate', '公司生产供给ABF载板', 'company', 'abf_substrate', 'M:N', '技术关联', 'Blackwell demo v2: 已有/确保存在', NULL, NULL, NULL, 'active', @project_id, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-ON DUPLICATE KEY UPDATE name=VALUES(name), source_object_id=VALUES(source_object_id), target_object_id=VALUES(target_object_id), link_category=VALUES(link_category), description=VALUES(description), status='active', updated_at=CURRENT_TIMESTAMP;
-
-INSERT INTO link_types (id, name, source_object_id, target_object_id, cardinality, link_category, description, industry_id, source_column, target_column, status, project_id, created_at, updated_at)
-VALUES ('lt_company_produces_for_flip_chip_bonding_equipment', '公司生产供给倒装键合机', 'company', 'flip_chip_bonding_equipment', 'M:N', '技术关联', 'Blackwell demo v2: 新增/确保存在', NULL, NULL, NULL, 'active', @project_id, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-ON DUPLICATE KEY UPDATE name=VALUES(name), source_object_id=VALUES(source_object_id), target_object_id=VALUES(target_object_id), link_category=VALUES(link_category), description=VALUES(description), status='active', updated_at=CURRENT_TIMESTAMP;
-
-INSERT INTO link_types (id, name, source_object_id, target_object_id, cardinality, link_category, description, industry_id, source_column, target_column, status, project_id, created_at, updated_at)
-VALUES ('lt_company_produces_for_hybrid_bonding_equipment', '公司生产供给混合键合机', 'company', 'hybrid_bonding_equipment', 'M:N', '技术关联', 'Blackwell demo v2: 新增/确保存在', NULL, NULL, NULL, 'active', @project_id, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-ON DUPLICATE KEY UPDATE name=VALUES(name), source_object_id=VALUES(source_object_id), target_object_id=VALUES(target_object_id), link_category=VALUES(link_category), description=VALUES(description), status='active', updated_at=CURRENT_TIMESTAMP;
-
-INSERT INTO link_types (id, name, source_object_id, target_object_id, cardinality, link_category, description, industry_id, source_column, target_column, status, project_id, created_at, updated_at)
-VALUES ('lt_company_produces_for_wafer_thinning_equipment', '公司生产供给晶圆减薄机', 'company', 'wafer_thinning_equipment', 'M:N', '技术关联', 'Blackwell demo v2: 新增/确保存在', NULL, NULL, NULL, 'active', @project_id, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-ON DUPLICATE KEY UPDATE name=VALUES(name), source_object_id=VALUES(source_object_id), target_object_id=VALUES(target_object_id), link_category=VALUES(link_category), description=VALUES(description), status='active', updated_at=CURRENT_TIMESTAMP;
-
-INSERT INTO link_types (id, name, source_object_id, target_object_id, cardinality, link_category, description, industry_id, source_column, target_column, status, project_id, created_at, updated_at)
-VALUES ('lt_flip_chip_bonding_equipment_supports_capability_of_assembly_test_service', '倒装键合机能力支撑封装测试服务', 'flip_chip_bonding_equipment', 'assembly_test_service', 'M:N', '技术关联', 'Blackwell demo v2: 已有/确保存在', NULL, NULL, NULL, 'active', @project_id, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-ON DUPLICATE KEY UPDATE name=VALUES(name), source_object_id=VALUES(source_object_id), target_object_id=VALUES(target_object_id), link_category=VALUES(link_category), description=VALUES(description), status='active', updated_at=CURRENT_TIMESTAMP;
-
-INSERT INTO link_types (id, name, source_object_id, target_object_id, cardinality, link_category, description, industry_id, source_column, target_column, status, project_id, created_at, updated_at)
-VALUES ('lt_hybrid_bonding_equipment_supports_capability_of_assembly_test_service', '混合键合机能力支撑封装测试服务', 'hybrid_bonding_equipment', 'assembly_test_service', 'M:N', '技术关联', 'Blackwell demo v2: 已有/确保存在', NULL, NULL, NULL, 'active', @project_id, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-ON DUPLICATE KEY UPDATE name=VALUES(name), source_object_id=VALUES(source_object_id), target_object_id=VALUES(target_object_id), link_category=VALUES(link_category), description=VALUES(description), status='active', updated_at=CURRENT_TIMESTAMP;
-
-INSERT INTO link_types (id, name, source_object_id, target_object_id, cardinality, link_category, description, industry_id, source_column, target_column, status, project_id, created_at, updated_at)
-VALUES ('lt_wafer_thinning_equipment_supports_capability_of_assembly_test_service', '晶圆减薄机能力支撑封装测试服务', 'wafer_thinning_equipment', 'assembly_test_service', 'M:N', '技术关联', 'Blackwell demo v2: 已有/确保存在', NULL, NULL, NULL, 'active', @project_id, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
 ON DUPLICATE KEY UPDATE name=VALUES(name), source_object_id=VALUES(source_object_id), target_object_id=VALUES(target_object_id), link_category=VALUES(link_category), description=VALUES(description), status='active', updated_at=CURRENT_TIMESTAMP;
 
 INSERT INTO link_types (id, name, source_object_id, target_object_id, cardinality, link_category, description, industry_id, source_column, target_column, status, project_id, created_at, updated_at)
@@ -763,97 +648,6 @@ SELECT 'lt_backend_facility_produces_for_assembly_test_service', 'obj_facility_t
 WHERE NOT EXISTS (
   SELECT 1 FROM link_instance_data
   WHERE link_type_id='lt_backend_facility_produces_for_assembly_test_service' AND source_instance_id='obj_facility_tsmc_ap6' AND target_instance_id='obj_service_tsmc_cowos'
-);
-
-INSERT INTO link_instance_data (link_type_id, source_instance_id, target_instance_id)
-SELECT 'lt_abf_substrate_supplies_to_graphics_processing_unit', 'obj_abf_substrate', 'obj_gpu_nvidia_b200'
-WHERE NOT EXISTS (
-  SELECT 1 FROM link_instance_data
-  WHERE link_type_id='lt_abf_substrate_supplies_to_graphics_processing_unit' AND source_instance_id='obj_abf_substrate' AND target_instance_id='obj_gpu_nvidia_b200'
-);
-
-INSERT INTO link_instance_data (link_type_id, source_instance_id, target_instance_id)
-SELECT 'lt_company_produces_for_abf_substrate', 'obj_company_ibiden', 'obj_abf_substrate'
-WHERE NOT EXISTS (
-  SELECT 1 FROM link_instance_data
-  WHERE link_type_id='lt_company_produces_for_abf_substrate' AND source_instance_id='obj_company_ibiden' AND target_instance_id='obj_abf_substrate'
-);
-
-INSERT INTO link_instance_data (link_type_id, source_instance_id, target_instance_id)
-SELECT 'lt_company_produces_for_abf_substrate', 'obj_company_unimicron', 'obj_abf_substrate'
-WHERE NOT EXISTS (
-  SELECT 1 FROM link_instance_data
-  WHERE link_type_id='lt_company_produces_for_abf_substrate' AND source_instance_id='obj_company_unimicron' AND target_instance_id='obj_abf_substrate'
-);
-
-INSERT INTO link_instance_data (link_type_id, source_instance_id, target_instance_id)
-SELECT 'lt_company_produces_for_abf_substrate', 'obj_company_shinko', 'obj_abf_substrate'
-WHERE NOT EXISTS (
-  SELECT 1 FROM link_instance_data
-  WHERE link_type_id='lt_company_produces_for_abf_substrate' AND source_instance_id='obj_company_shinko' AND target_instance_id='obj_abf_substrate'
-);
-
-INSERT INTO link_instance_data (link_type_id, source_instance_id, target_instance_id)
-SELECT 'lt_company_produces_for_flip_chip_bonding_equipment', 'obj_company_besi', 'obj_equipment_flip_chip_bonder'
-WHERE NOT EXISTS (
-  SELECT 1 FROM link_instance_data
-  WHERE link_type_id='lt_company_produces_for_flip_chip_bonding_equipment' AND source_instance_id='obj_company_besi' AND target_instance_id='obj_equipment_flip_chip_bonder'
-);
-
-INSERT INTO link_instance_data (link_type_id, source_instance_id, target_instance_id)
-SELECT 'lt_company_produces_for_flip_chip_bonding_equipment', 'obj_company_asmpt', 'obj_equipment_flip_chip_bonder'
-WHERE NOT EXISTS (
-  SELECT 1 FROM link_instance_data
-  WHERE link_type_id='lt_company_produces_for_flip_chip_bonding_equipment' AND source_instance_id='obj_company_asmpt' AND target_instance_id='obj_equipment_flip_chip_bonder'
-);
-
-INSERT INTO link_instance_data (link_type_id, source_instance_id, target_instance_id)
-SELECT 'lt_company_produces_for_flip_chip_bonding_equipment', 'obj_company_kulicke_soffa', 'obj_equipment_flip_chip_bonder'
-WHERE NOT EXISTS (
-  SELECT 1 FROM link_instance_data
-  WHERE link_type_id='lt_company_produces_for_flip_chip_bonding_equipment' AND source_instance_id='obj_company_kulicke_soffa' AND target_instance_id='obj_equipment_flip_chip_bonder'
-);
-
-INSERT INTO link_instance_data (link_type_id, source_instance_id, target_instance_id)
-SELECT 'lt_company_produces_for_hybrid_bonding_equipment', 'obj_company_besi', 'obj_equipment_hybrid_bonder'
-WHERE NOT EXISTS (
-  SELECT 1 FROM link_instance_data
-  WHERE link_type_id='lt_company_produces_for_hybrid_bonding_equipment' AND source_instance_id='obj_company_besi' AND target_instance_id='obj_equipment_hybrid_bonder'
-);
-
-INSERT INTO link_instance_data (link_type_id, source_instance_id, target_instance_id)
-SELECT 'lt_company_produces_for_hybrid_bonding_equipment', 'obj_company_asmpt', 'obj_equipment_hybrid_bonder'
-WHERE NOT EXISTS (
-  SELECT 1 FROM link_instance_data
-  WHERE link_type_id='lt_company_produces_for_hybrid_bonding_equipment' AND source_instance_id='obj_company_asmpt' AND target_instance_id='obj_equipment_hybrid_bonder'
-);
-
-INSERT INTO link_instance_data (link_type_id, source_instance_id, target_instance_id)
-SELECT 'lt_company_produces_for_wafer_thinning_equipment', 'obj_company_disco', 'obj_equipment_wafer_thinning'
-WHERE NOT EXISTS (
-  SELECT 1 FROM link_instance_data
-  WHERE link_type_id='lt_company_produces_for_wafer_thinning_equipment' AND source_instance_id='obj_company_disco' AND target_instance_id='obj_equipment_wafer_thinning'
-);
-
-INSERT INTO link_instance_data (link_type_id, source_instance_id, target_instance_id)
-SELECT 'lt_flip_chip_bonding_equipment_supports_capability_of_assembly_test_service', 'obj_equipment_flip_chip_bonder', 'obj_service_tsmc_cowos'
-WHERE NOT EXISTS (
-  SELECT 1 FROM link_instance_data
-  WHERE link_type_id='lt_flip_chip_bonding_equipment_supports_capability_of_assembly_test_service' AND source_instance_id='obj_equipment_flip_chip_bonder' AND target_instance_id='obj_service_tsmc_cowos'
-);
-
-INSERT INTO link_instance_data (link_type_id, source_instance_id, target_instance_id)
-SELECT 'lt_hybrid_bonding_equipment_supports_capability_of_assembly_test_service', 'obj_equipment_hybrid_bonder', 'obj_service_tsmc_cowos'
-WHERE NOT EXISTS (
-  SELECT 1 FROM link_instance_data
-  WHERE link_type_id='lt_hybrid_bonding_equipment_supports_capability_of_assembly_test_service' AND source_instance_id='obj_equipment_hybrid_bonder' AND target_instance_id='obj_service_tsmc_cowos'
-);
-
-INSERT INTO link_instance_data (link_type_id, source_instance_id, target_instance_id)
-SELECT 'lt_wafer_thinning_equipment_supports_capability_of_assembly_test_service', 'obj_equipment_wafer_thinning', 'obj_service_tsmc_cowos'
-WHERE NOT EXISTS (
-  SELECT 1 FROM link_instance_data
-  WHERE link_type_id='lt_wafer_thinning_equipment_supports_capability_of_assembly_test_service' AND source_instance_id='obj_equipment_wafer_thinning' AND target_instance_id='obj_service_tsmc_cowos'
 );
 
 INSERT INTO link_instance_data (link_type_id, source_instance_id, target_instance_id)

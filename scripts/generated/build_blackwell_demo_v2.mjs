@@ -17,7 +17,6 @@ const sources = {
   hbm3e: 'https://www.skhynix.com/product/hbm3e.go',
   micronHbm3e: 'https://www.micron.com/products/memory/hbm/hbm3e',
   semiCoWoS: 'https://www.semi.org/en/blogs/technology-trends/tsmc-cowos-advanced-packaging',
-  semiwiki: 'https://semiwiki.com/semiconductor-services/semiconductor-packaging/335318-understanding-tsmcs-cowos-l-packaging/',
 };
 
 const ot = {
@@ -74,13 +73,6 @@ const objectRows = [
   { ot: '公司', id: 'obj_company_skhynix', name: 'SK海力士', nameEn: 'SK hynix', description: 'HBM3E supplier.', company_category: 'Memory supplier', country_region: 'Korea', source_url: sources.hbm3e },
   { ot: '公司', id: 'obj_company_micron', name: '美光科技', nameEn: 'Micron', description: 'HBM3E supplier.', company_category: 'Memory supplier', country_region: 'United States', source_url: sources.micronHbm3e },
   { ot: '公司', id: 'obj_company_samsung_electronics', name: '三星电子', nameEn: 'Samsung Electronics', description: 'HBM supplier candidate.', company_category: 'Memory supplier', country_region: 'Korea', source_url: sources.hbm3e },
-  { ot: '公司', id: 'obj_company_ibiden', name: '揖斐电', nameEn: 'Ibiden', description: 'ABF substrate supplier.', company_category: 'IC substrate supplier', country_region: 'Japan', source_url: sources.semiwiki },
-  { ot: '公司', id: 'obj_company_unimicron', name: '欣兴电子', nameEn: 'Unimicron', description: 'ABF substrate supplier.', company_category: 'IC substrate supplier', country_region: 'Taiwan, China', source_url: sources.semiwiki },
-  { ot: '公司', id: 'obj_company_shinko', name: '新光电气', nameEn: 'Shinko Electric', description: 'ABF substrate supplier.', company_category: 'IC substrate supplier', country_region: 'Japan', source_url: sources.semiwiki },
-  { ot: '公司', id: 'obj_company_besi', name: 'BESI', nameEn: 'BESI', description: 'Advanced bonding equipment supplier.', company_category: 'Semiconductor equipment supplier', country_region: 'Netherlands', source_url: sources.semiwiki },
-  { ot: '公司', id: 'obj_company_asmpt', name: 'ASMPT', nameEn: 'ASMPT', description: 'Advanced bonding equipment supplier.', company_category: 'Semiconductor equipment supplier', country_region: 'Hong Kong, China', source_url: sources.semiwiki },
-  { ot: '公司', id: 'obj_company_kulicke_soffa', name: 'K&S', nameEn: 'Kulicke & Soffa', description: 'Bonding equipment supplier.', company_category: 'Semiconductor equipment supplier', country_region: 'United States', source_url: sources.semiwiki },
-  { ot: '公司', id: 'obj_company_disco', name: 'DISCO', nameEn: 'DISCO', description: 'Wafer thinning and dicing equipment supplier.', company_category: 'Semiconductor equipment supplier', country_region: 'Japan', source_url: sources.semiwiki },
 
   { ot: 'GPU', id: 'obj_gpu_nvidia_b200', name: 'NVIDIA B200 Tensor Core GPU', nameEn: 'NVIDIA B200 Tensor Core GPU', description: 'Blackwell-generation Tensor Core GPU used in GB200 Grace Blackwell Superchip and HGX B200 platforms.', compute_die_count: 2, transistor_count_billion: 208, die_to_die_bandwidth_tbps: 10, source_url: sources.nvidiaBlackwellNewsroom },
   { ot: '训练加速器', id: 'obj_training_accelerator_gb200', name: 'NVIDIA GB200 Grace Blackwell Superchip', nameEn: 'NVIDIA GB200 Grace Blackwell Superchip', description: 'Training accelerator module combining one Grace CPU and two Blackwell GPUs.', gpu_count: 2, cpu_count: 1, memory_capacity_gb: 372, memory_bandwidth_tbps: 16, interconnect_bandwidth_tbps: 3.6, source_url: sources.nvidiaGb200 },
@@ -101,11 +93,6 @@ const objectRows = [
   { ot: '封装方案', id: 'obj_packaging_solution_tsmc_cowos_l', name: 'TSMC CoWoS-L', nameEn: 'TSMC CoWoS-L', description: 'Concrete CoWoS solution variant using local silicon interconnect bridges for large multi-die AI packages.', interposer_type: 'RDL interposer plus local silicon interconnect', local_silicon_interconnect: 'LSI bridge', hbm_support: 'supports multiple HBM stacks', source_url: sources.tsmcCowos },
   { ot: '封装测试服务', id: 'obj_service_tsmc_cowos', name: '台积电CoWoS封装测试服务', nameEn: 'TSMC CoWoS Packaging and Testing Service', description: 'Commercial packaging and testing service capacity required to manufacture CoWoS-based AI accelerator products.', service_type: 'advanced packaging and test', capacity_status: 'tight capacity / expansion demand', source_url: sources.semiCoWoS },
   { ot: '后道工厂', id: 'obj_facility_tsmc_ap6', name: '台积电CoWoS后道产能', nameEn: 'TSMC CoWoS Backend Capacity Taiwan', description: 'TSMC backend capacity associated with CoWoS advanced packaging expansion.', country_region: 'Taiwan, China', city_or_site: 'Taiwan sites', facility_type: 'advanced packaging backend facility', status: 'capacity expansion', source_url: sources.semiCoWoS },
-
-  { ot: 'ABF载板', id: 'obj_abf_substrate', name: 'AI加速器ABF载板', nameEn: 'ABF Substrate for AI Accelerators', description: 'Large-size ABF substrate used by high-end AI accelerator packages.', dielectric_material: 'Ajinomoto build-up film', demand_driver: 'larger package size and advanced packaging demand', source_url: sources.semiwiki },
-  { ot: '倒装键合机', id: 'obj_equipment_flip_chip_bonder', name: 'AI封装倒装键合机', nameEn: 'Flip-chip Bonder for AI Packaging', description: 'Flip-chip bonding equipment used in advanced packaging assembly.', equipment_category: 'flip-chip bonding', supported_process: 'die attach / chip placement for advanced package', source_url: sources.semiwiki },
-  { ot: '混合键合机', id: 'obj_equipment_hybrid_bonder', name: '先进封装混合键合机', nameEn: 'Hybrid Bonder for Advanced Packaging', description: 'Hybrid bonding equipment relevant to advanced interconnect density.', equipment_category: 'hybrid bonding', supported_process: 'wafer-to-wafer / die-to-wafer bonding', source_url: sources.semiwiki },
-  { ot: '晶圆减薄机', id: 'obj_equipment_wafer_thinning', name: 'HBM/先进封装晶圆减薄机', nameEn: 'Wafer Thinning Equipment for HBM and Advanced Packaging', description: 'Wafer thinning equipment used in HBM and advanced packaging process flows.', equipment_category: 'wafer thinning', supported_process: 'backgrind / thinning for stacked memory and packaging', source_url: sources.semiwiki },
 
   { ot: '资本开支', id: 'obj_metric_tsmc_adv_packaging_capex', name: '台积电先进封装扩产资本开支', nameEn: 'TSMC Advanced Packaging Expansion Capex', description: 'Capital expenditure associated with advanced packaging and CoWoS capacity expansion.', capex_amount: 'not specified', currency: 'USD/TWD', period: '2024-2026', capex_category: 'advanced packaging capacity expansion', region: 'Taiwan, China', capacity_or_technology_purpose: 'CoWoS and AI accelerator package capacity', source_url: sources.semiCoWoS },
   { ot: '数据中心计算应用', id: 'obj_app_ai_server_training', name: '数据中心AI训练与推理', nameEn: 'Data Center AI Training and Inference', description: 'Demand scenario driving Blackwell GPU, HBM and advanced packaging requirements.', application_scenario: 'large-scale AI training and inference', compute_requirement: 'high FLOPS, high memory bandwidth, high cluster interconnect bandwidth', source_url: sources.nvidiaGb200 },
@@ -134,14 +121,6 @@ const linkTypeRows = [
   ['lt_assembly_test_service_supports_capability_of_graphics_processing_unit', '封装测试服务能力支撑GPU', '封装测试服务', 'GPU', '能力支撑', '已有/确保存在'],
   ['lt_backend_facility_belongs_to_company', '后道工厂所属公司', '后道工厂', '公司', '所属', '已有/确保存在'],
   ['lt_backend_facility_produces_for_assembly_test_service', '后道工厂生产供给封装测试服务', '后道工厂', '封装测试服务', '生产供给', '已有/确保存在'],
-  ['lt_abf_substrate_supplies_to_graphics_processing_unit', 'ABF载板供给于GPU', 'ABF载板', 'GPU', '供给于', '已有/确保存在'],
-  ['lt_company_produces_for_abf_substrate', '公司生产供给ABF载板', '公司', 'ABF载板', '生产供给', '已有/确保存在'],
-  ['lt_company_produces_for_flip_chip_bonding_equipment', '公司生产供给倒装键合机', '公司', '倒装键合机', '生产供给', '新增/确保存在'],
-  ['lt_company_produces_for_hybrid_bonding_equipment', '公司生产供给混合键合机', '公司', '混合键合机', '生产供给', '新增/确保存在'],
-  ['lt_company_produces_for_wafer_thinning_equipment', '公司生产供给晶圆减薄机', '公司', '晶圆减薄机', '生产供给', '新增/确保存在'],
-  ['lt_flip_chip_bonding_equipment_supports_capability_of_assembly_test_service', '倒装键合机能力支撑封装测试服务', '倒装键合机', '封装测试服务', '能力支撑', '已有/确保存在'],
-  ['lt_hybrid_bonding_equipment_supports_capability_of_assembly_test_service', '混合键合机能力支撑封装测试服务', '混合键合机', '封装测试服务', '能力支撑', '已有/确保存在'],
-  ['lt_wafer_thinning_equipment_supports_capability_of_assembly_test_service', '晶圆减薄机能力支撑封装测试服务', '晶圆减薄机', '封装测试服务', '能力支撑', '已有/确保存在'],
   ['lt_capital_expenditure_measures_for_assembly_test_service', '资本开支统计对象封装测试服务', '资本开支', '封装测试服务', '统计对象', '已有/确保存在'],
   ['lt_capital_expenditure_measures_for_backend_facility', '资本开支统计对象后道工厂', '资本开支', '后道工厂', '统计对象', '已有/确保存在'],
 ];
@@ -174,19 +153,6 @@ const linkRows = [
   ['link_cowos_service_to_b200', 'lt_assembly_test_service_supports_capability_of_graphics_processing_unit', 'obj_service_tsmc_cowos', 'obj_gpu_nvidia_b200', 'Packaging service supports B200 production.'],
   ['link_cowos_facility_to_tsmc', 'lt_backend_facility_belongs_to_company', 'obj_facility_tsmc_ap6', 'obj_company_tsmc', 'Facility owner relationship is modeled through link instance.'],
   ['link_cowos_facility_to_service', 'lt_backend_facility_produces_for_assembly_test_service', 'obj_facility_tsmc_ap6', 'obj_service_tsmc_cowos', 'Backend facility produces CoWoS packaging service capacity.'],
-  ['link_abf_to_b200', 'lt_abf_substrate_supplies_to_graphics_processing_unit', 'obj_abf_substrate', 'obj_gpu_nvidia_b200', 'Large ABF substrates supply high-end AI accelerator packages.'],
-  ['link_ibiden_to_abf', 'lt_company_produces_for_abf_substrate', 'obj_company_ibiden', 'obj_abf_substrate', 'ABF supplier relationship.'],
-  ['link_unimicron_to_abf', 'lt_company_produces_for_abf_substrate', 'obj_company_unimicron', 'obj_abf_substrate', 'ABF supplier relationship.'],
-  ['link_shinko_to_abf', 'lt_company_produces_for_abf_substrate', 'obj_company_shinko', 'obj_abf_substrate', 'ABF supplier relationship.'],
-  ['link_besi_to_flip_chip', 'lt_company_produces_for_flip_chip_bonding_equipment', 'obj_company_besi', 'obj_equipment_flip_chip_bonder', 'Equipment supplier relationship.'],
-  ['link_asmpt_to_flip_chip', 'lt_company_produces_for_flip_chip_bonding_equipment', 'obj_company_asmpt', 'obj_equipment_flip_chip_bonder', 'Equipment supplier relationship.'],
-  ['link_kulicke_to_flip_chip', 'lt_company_produces_for_flip_chip_bonding_equipment', 'obj_company_kulicke_soffa', 'obj_equipment_flip_chip_bonder', 'Equipment supplier relationship.'],
-  ['link_besi_to_hybrid', 'lt_company_produces_for_hybrid_bonding_equipment', 'obj_company_besi', 'obj_equipment_hybrid_bonder', 'Equipment supplier relationship.'],
-  ['link_asmpt_to_hybrid', 'lt_company_produces_for_hybrid_bonding_equipment', 'obj_company_asmpt', 'obj_equipment_hybrid_bonder', 'Equipment supplier relationship.'],
-  ['link_disco_to_thinning', 'lt_company_produces_for_wafer_thinning_equipment', 'obj_company_disco', 'obj_equipment_wafer_thinning', 'Equipment supplier relationship.'],
-  ['link_flip_chip_to_service', 'lt_flip_chip_bonding_equipment_supports_capability_of_assembly_test_service', 'obj_equipment_flip_chip_bonder', 'obj_service_tsmc_cowos', 'Flip-chip bonding equipment supports advanced packaging service.'],
-  ['link_hybrid_to_service', 'lt_hybrid_bonding_equipment_supports_capability_of_assembly_test_service', 'obj_equipment_hybrid_bonder', 'obj_service_tsmc_cowos', 'Hybrid bonding equipment supports advanced packaging service.'],
-  ['link_thinning_to_service', 'lt_wafer_thinning_equipment_supports_capability_of_assembly_test_service', 'obj_equipment_wafer_thinning', 'obj_service_tsmc_cowos', 'Wafer thinning equipment supports advanced packaging and HBM process flows.'],
   ['link_capex_to_service', 'lt_capital_expenditure_measures_for_assembly_test_service', 'obj_metric_tsmc_adv_packaging_capex', 'obj_service_tsmc_cowos', 'Capex is measured against packaging service capacity.'],
   ['link_capex_to_facility', 'lt_capital_expenditure_measures_for_backend_facility', 'obj_metric_tsmc_adv_packaging_capex', 'obj_facility_tsmc_ap6', 'Capex is measured against backend facility expansion.'],
 ];
@@ -202,8 +168,8 @@ const auditRows = [
   ['封装方案', 'provider/technology_type/multi_die_support/key_bottleneck等关系或解释性字段', '封装方案承载TSMC CoWoS-L这类具体可被GPU采用的方案，保留interposer_type、local_silicon_interconnect、hbm_support', '让GPU采用的对象更具体，同时把供应商、瓶颈、服务能力交给关系和服务层表达。'],
   ['封装测试服务', 'provider/supported_product/supported_packaging_solution', '封装测试服务承载台积电CoWoS封装测试服务这类商业化服务/产能能力，通过公司、后道工厂、资本开支、GPU支撑关系挂载', '服务不再和CoWoS-L方案混同，便于回答“谁能做、产能在哪里、扩产投向什么”。'],
   ['后道工厂', 'owner_company/related_technology', '改为后道工厂所属公司、后道工厂生产供给封装测试服务', '工厂保留地点/状态，归属和能力用边表达。'],
-  ['ABF载板', 'supplier/target_application', '改为公司生产供给ABF载板、ABF载板供给于GPU', '材料对象保留材料和需求驱动，供应链挂边。'],
-  ['设备类OT', 'supplier', '改为公司生产供给倒装键合机/混合键合机/晶圆减薄机', '设备参数和设备供应商分开，便于查找设备瓶颈。'],
+  ['ABF载板', 'AI加速器ABF载板等泛化实例和弱来源URL', '本版不导入ABF载板实例，也不导入ABF载板供给GPU或公司生产供给ABF载板关系；待有具体产品/产品族证据后再补', '避免把类别描述误当成真实实例。'],
+  ['设备类OT', 'AI封装倒装键合机/先进封装混合键合机/HBM先进封装晶圆减薄机等泛化实例', '本版不导入倒装键合机、混合键合机、晶圆减薄机实例，也不导入相关公司供给或能力支撑关系；待有具体设备型号/产品系列证据后再补', '避免用泛化设备节点承载供应商关系，降低演示被追问的风险。'],
   ['资本开支', 'company_name', '不作为正式属性；通过统计对象边挂到服务/工厂，必要时由服务/工厂回推公司', '资本开支更像事实对象，统计对象比文本公司名更稳。'],
 ];
 
