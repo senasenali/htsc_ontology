@@ -1,0 +1,3 @@
+﻿sourceInstance,targetInstance,linkTypeName,sourceObjectType,targetObjectType,linkTypeCategory,source_url
+AI加速器电源完整性MLCC,NVIDIA B200 Tensor Core GPU,MLCC供给于GPU,MLCC,GPU,上游投入,https://www.nvidia.com/en-us/data-center/gb200-nvl72/
+AI加速器电源完整性MLCC,AMD Instinct MI350 Series,MLCC供给于GPU,MLCC,GPU,上游投入,https://www.nvidia.com/en-us/data-center/gb200-nvl72/

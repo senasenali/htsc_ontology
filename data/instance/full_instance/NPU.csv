@@ -1,0 +1,4 @@
+﻿nameCn,nameEn,objectTypeName,description,source_url
+Huawei Ascend 310 AI Processor,,NPU,Huawei Ascend inference AI processor mapped to the NPU view from local AI accelerator instances.,https://support.huaweicloud.com/eu/productdesc-ecs/ecs_01_0047.html
+Huawei Ascend 910 AI Processor,,NPU,"Huawei Ascend AI processor used across training and inference systems, mapped to the NPU view from local AI accelerator instances.",https://support.huawei.com/enterprise/en/doc/EDOC1100149962/76a340e3/upgrading-the-ascend-910-ai-processor-driver
+Huawei Ascend 910C AI Processor,,NPU,"Huawei Ascend AI processor used in Atlas 900 A3 SuperPoD, mapped to the NPU view from local AI accelerator instances.",https://www.huawei.com/en/news/2025/9/hc-xu-keynote-speech

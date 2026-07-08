@@ -1,0 +1,13 @@
+{
+  "generated_at": "2026-06-26T13:23:23+08:00",
+  "categories": {
+    "full_instance": {
+      "file_count": 280,
+      "row_count": 5031
+    },
+    "fact_tables": {
+      "file_count": 68,
+      "row_count": 16162
+    }
+  }
+}

@@ -1,0 +1,2 @@
+﻿sourceInstance,targetInstance,linkTypeName,sourceObjectType,targetObjectType,linkTypeCategory,source_url
+GPU板级VRM,NVIDIA B200 Tensor Core GPU,电源模块供给于GPU,电源模块,GPU,上游投入,https://www.nvidia.com/en-us/data-center/gb200-nvl72/

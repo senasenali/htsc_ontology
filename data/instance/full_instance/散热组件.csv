@@ -1,0 +1,2 @@
+﻿nameCn,nameEn,objectTypeName,description,property.cooling_type,property.heat_dissipation_capacity,property.thermal_resistance,property.coolant_medium,source_url
+直接液冷冷板组件,direct liquid cooling cold plate assembly,散热组件,Cold plate and liquid loop assembly used to support rack-scale Blackwell/GB200-class accelerator density.,Direct liquid cooling,Rack-scale AI accelerator thermal load,,Facility or rack liquid loop coolant,https://www.nvidia.com/en-us/data-center/gb200-nvl72/

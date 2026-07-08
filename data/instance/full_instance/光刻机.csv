@@ -1,0 +1,4 @@
+﻿nameCn,nameEn,objectTypeName,description,source_url
+CoWoS中介层/RDL用DUV光刻机,,光刻机,CoWoS中介层/RDL用DUV光刻机 from fact table 光刻机能力支撑晶圆代工_fact.csv.,https://3dfabric.tsmc.com/english/dedicatedFoundry/technology/cowos.htm
+ASML TWINSCAN NXT:1980Di,,光刻机,ASML official product page for TWINSCAN NXT:1980Di DUV lithography system.,https://www.asml.com/products/duv-lithography-systems/twinscan-nxt1980di
+ASML TWINSCAN NXT:2000i,,光刻机,ASML official product page for TWINSCAN NXT:2000i DUV lithography system.,https://www.asml.com/products/duv-lithography-systems/twinscan-nxt2000i

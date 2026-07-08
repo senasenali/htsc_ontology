@@ -1,0 +1,7 @@
+﻿nameCn,nameEn,objectTypeName,description,source_url
+AMD Instinct MI350 Series,,训练加速器,AMD CDNA 4 accelerator series for generative AI training and HPC.,https://www.sec.gov/Archives/edgar/data/2488/000000248826000021/amd-20251227.htm
+Cambricon MLU370-X8 cloud training AI accelerator,,训练加速器,Cambricon MLU370-X8 cloud training AI accelerator card.,https://www.cambricon.com/
+NVIDIA B200 Tensor Core GPU,,训练加速器,Blackwell-generation accelerator used for training and inference.,https://www.nvidia.com/en-us/data-center/h200/
+NVIDIA GB200 NVL72,,训练加速器,Rack-scale Grace Blackwell system with 72 Blackwell GPUs.,https://nvidianews.nvidia.com/news/nvidia-announces-financial-results-for-fourth-quarter-and-fiscal-2026
+NVIDIA H100 Tensor Core GPU,,训练加速器,AI training accelerator used in data-center training workloads.,https://www.nvidia.com/en-us/data-center/h200/
+NVIDIA H200 Tensor Core GPU,,训练加速器,AI/HPC accelerator with HBM3e memory for large models and HPC.,https://www.nvidia.com/en-us/data-center/h200/

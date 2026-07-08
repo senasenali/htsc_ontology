@@ -17,6 +17,7 @@ export function GraphView({ data, onUpdate }: { data: OntologyData; onUpdate?: (
   const [aiSheetOpen, setAiSheetOpen] = useState(false);
   const [projectName, setProjectName] = useState<string>('项目本体');
   const [flatOperationMode, setFlatOperationMode] = useState(true);
+  const [flatCompactMode, setFlatCompactMode] = useState(false);
   const [flatResetTrigger, setFlatResetTrigger] = useState(0);
 
   // Load current project name
@@ -116,6 +117,18 @@ export function GraphView({ data, onUpdate }: { data: OntologyData; onUpdate?: (
           {viewMode === 'flat' && (
             <>
               <button
+                onClick={() => setFlatCompactMode(prev => !prev)}
+                className={cn(
+                  "h-7 px-3 rounded-md text-xs font-medium transition-colors border",
+                  flatCompactMode
+                    ? "bg-purple-50 text-purple-600 border-purple-200 hover:bg-purple-100"
+                    : "bg-slate-50 text-slate-500 border-slate-200 hover:bg-slate-100"
+                )}
+                title={flatCompactMode ? '紧凑模式：仅展示 OT 名称' : '正常模式：展示 OT 名称和属性'}
+              >
+                {flatCompactMode ? '紧凑' : '正常'}
+              </button>
+              <button
                 onClick={() => setFlatOperationMode(prev => !prev)}
                 className={cn(
                   "h-7 px-3 rounded-md text-xs font-medium transition-colors border",
@@ -189,6 +202,7 @@ export function GraphView({ data, onUpdate }: { data: OntologyData; onUpdate?: (
             onSelectObject={setSelectedObjectId}
             categoryFilter={categoryFilter}
             isOperationMode={flatOperationMode}
+            compactMode={flatCompactMode}
             resetTrigger={flatResetTrigger}
             aiSheetOpen={aiSheetOpen}
             setAiSheetOpen={setAiSheetOpen}

@@ -1,0 +1,2 @@
+﻿sourceInstance,targetInstance,linkTypeName,sourceObjectType,targetObjectType,linkTypeCategory,source_url
+直接液冷冷板组件,NVIDIA GB200 NVL72,散热组件供给于训练加速器,散热组件,训练加速器,上游投入,https://www.nvidia.com/en-us/data-center/gb200-nvl72/

@@ -1,0 +1,76 @@
+{
+  "source": "SEMI_WFF_2026_1Q.xlsx",
+  "ontology_metadata_changed": false,
+  "added_capacity_backend_facility_lt": true,
+  "added_foundry_scope_instance": false,
+  "facility_instance_counts": {
+    "晶圆制造工厂": 1095,
+    "外延工厂": 258,
+    "研发中试工厂": 228,
+    "后道工厂": 22
+  },
+  "facility_record_index_size": 1603,
+  "duplicate_facility_record_ids": {},
+  "written_link_csv_rows": {
+    "data/instance/full_instance/晶圆产能统计对象晶圆制造工厂.csv": 1078,
+    "data/instance/full_instance/晶圆产能统计对象研发中试工厂.csv": 222,
+    "data/instance/full_instance/晶圆产能统计对象外延工厂.csv": 257,
+    "data/instance/full_instance/晶圆产能统计对象后道工厂.csv": 12,
+    "data/instance/full_instance/资本开支统计对象晶圆制造工厂.csv": 593,
+    "data/instance/full_instance/资本开支统计对象外延工厂.csv": 169,
+    "data/instance/full_instance/资本开支统计对象研发中试工厂.csv": 149,
+    "data/instance/full_instance/资本开支统计对象后道工厂.csv": 18,
+    "data/instance/full_instance/晶圆产能统计对象晶圆代工.csv": 41
+  },
+  "skipped_no_existing_link_csv": {},
+  "unmatched_counts": {
+    "capacity": 0,
+    "capex": 0
+  },
+  "normalized_numeric_values": [],
+  "fact_table_summary": {
+    "公司市场数据_fact.csv": {
+      "semi_rows": 8598,
+      "metric_counts": {
+        "construction_spending": 1812,
+        "equipment_spending": 1812,
+        "installed_wafer_capacity": 1770,
+        "capacity_by_geometry": 1413,
+        "total_capacity": 589,
+        "foundry_installed_capacity": 471,
+        "discrete_capacity": 175,
+        "opto_capacity": 160,
+        "mems_capacity": 114,
+        "other_capacity": 101,
+        "analog_capacity": 84,
+        "epiwafer_capacity": 41,
+        "logic_micro_capacity": 38,
+        "memory_capacity": 18
+      },
+      "source_sheets": {
+        "Spending by Company": 3624,
+        "Capacity by Company": 1770,
+        "Cap by Geom 2026": 1413,
+        "Cap by Product Type 2026": 1320,
+        "Cap by Foundries": 471
+      }
+    },
+    "工厂市场数据_fact.csv": {
+      "semi_rows": 6855,
+      "metric_counts": {
+        "current_full_capacity": 1573,
+        "capacity_200mm_equivalent": 1572,
+        "project_total_cost": 929,
+        "project_construction_cost": 854,
+        "project_equipment_cost": 794,
+        "cleanroom_area": 667,
+        "facility_size": 466
+      },
+      "source_sheets": {
+        "Company Detail": 5449,
+        "Project Spending": 1406
+      }
+    }
+  },
+  "numeric_anomalies": []
+}

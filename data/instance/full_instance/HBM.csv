@@ -1,0 +1,5 @@
+﻿nameCn,nameEn,objectTypeName,description,source_url
+Micron HBM3E,,HBM,Micron high-bandwidth memory generation HBM3E.,https://www.micron.com/products/memory/hbm/hbm3e
+Samsung HBM3E,,HBM,Samsung high-bandwidth memory generation HBM3E.,https://semiconductor.samsung.com/dram/hbm/hbm3e/
+HBM3,,HBM,HBM3 from fact table GPU上游投入HBM_fact.csv.,https://www.nvidia.com/en-us/data-center/h200/
+HBM3E,,HBM,HBM3E from fact table GPU上游投入HBM_fact.csv.,https://www.nvidia.com/en-us/data-center/h200/

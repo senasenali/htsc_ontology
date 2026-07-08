@@ -1,0 +1,3 @@
+﻿nameCn,nameEn,objectTypeName,description,property.output_power,property.conversion_efficiency,property.input_voltage_range,property.redundancy_mode,source_url
+AI服务器高功率电源模块,AI server high-power power module,电源模块,High-power power delivery module for AI accelerator server trays and racks.,kW-class per server tray; rack-level demand scales with GPU TDP,High-efficiency data-center power conversion,,N+N or N+1 depending on system design,https://www.nvidia.com/en-us/data-center/gb200-nvl72/
+GPU板级VRM,GPU board-level voltage regulator module,电源模块,"Board-level voltage regulator module supplying GPU core, HBM and high-speed I/O rails.",Scales with GPU TDP and HBM capacity,,,,https://www.nvidia.com/en-us/data-center/gb200-nvl72/

@@ -1,0 +1,10 @@
+﻿nameCn,nameEn,objectTypeName,description,source_url
+AMD Instinct MI300X,,GPU,AMD Instinct data-center GPU accelerator for AI and HPC.,https://www.amd.com/en/products/accelerators/instinct/mi300/mi300x.html
+AMD Instinct MI350 Series,,GPU,AMD CDNA 4 data-center GPU accelerator series for AI/HPC.,https://www.nvidia.com/en-us/data-center/h200/
+NVIDIA B200 Tensor Core GPU,,GPU,Blackwell-generation data-center GPU used in B200/DGX B200 systems.,https://www.nvidia.com/en-us/data-center/gb200-nvl72/
+NVIDIA Blackwell Ultra GPU,,GPU,Blackwell Ultra architecture family GPU for AI factories.,https://www.nvidia.com/en-us/data-center/h200/
+NVIDIA H100 Tensor Core GPU,,GPU,NVIDIA Hopper-generation data-center GPU for AI and HPC.,https://www.nvidia.com/en-us/data-center/h100/
+NVIDIA H200 Tensor Core GPU,,GPU,Data-center GPU product in NVIDIA H200 family.,https://www.nvidia.com/en-us/data-center/h200/
+NVIDIA B200 inference cost,,GPU,NVIDIA B200 inference cost price-bearing instance for GPU.,https://www.nvidia.com/en-us/data-center/h100/
+NVIDIA RTX PRO 6000 Blackwell Workstation Edition,,GPU,NVIDIA RTX PRO 6000 Blackwell Workstation Edition price-bearing instance for GPU.,https://marketplace.nvidia.com/en-us/enterprise/laptops-workstations/nvidia-rtx-pro-6000-blackwell-workstation-edition/
+Intel Arc B580 Limited Edition,,GPU,Intel Arc B580 Limited Edition price-bearing instance for GPU.,https://www.intel.com/content/www/us/en/products/sku/241598/intel-arc-b580-graphics/ordering.html

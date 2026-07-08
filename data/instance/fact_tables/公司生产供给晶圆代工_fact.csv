@@ -1,0 +1,5 @@
+﻿company_name,business_segment,metric_period,gross_margin_pct,metric_basis,source_doc,source_date,confidence,notes
+TSMC,foundry,FY2025,59.9,company_gross_margin_used_as_foundry_proxy,https://investor.tsmc.com/sites/ir/annual-report/2025/2025%20Annual%20Report_E.pdf,2026-04-17,medium,TSMC is mainly pure-play foundry; annual report reports company gross profit margin.
+SMIC,foundry,4Q2025,19.2,quarterly_gross_margin,https://smicuat.webfoss.com/en/site/news_read/7949,2026-02-10,high,SMIC Q4 2025 results report gross margin.
+Semiconductor Manufacturing International Corporation,foundry,1Q2026,20.1,quarterly_gross_margin,https://www.hkexnews.hk/listedco/listconews/sehk/2026/0514/2026051400908.pdf,2026-05-14,high,Official HKEX results; gross margin rose 0.9 percentage point from 4Q2025 and was 2.4 percentage points below 1Q2025.
+Hua Hong Semiconductor Limited,foundry,1Q2026,13.0,quarterly_gross_margin,https://www.hkexnews.hk/listedco/listconews/sehk/2026/0514/2026051400506.pdf,2026-05-14,high,Official HKEX results; gross margin was flat quarter over quarter and rose 3.8 percentage points year over year.

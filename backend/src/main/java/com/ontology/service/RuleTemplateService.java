@@ -253,7 +253,7 @@ public class RuleTemplateService {
                 params.add(inputParam(
                         ruleId,
                         sort++,
-                        property.getId(),
+                        ruleParamName(property),
                         normalizeType(property.getType()),
                         isPrimary(property),
                         firstNonBlank(property.getDescription(), property.getName(), property.getBaseColumn(), property.getId()),
@@ -404,6 +404,10 @@ public class RuleTemplateService {
 
     private int isPrimary(Property property) {
         return property.getIsPrimaryKey() != null && property.getIsPrimaryKey() == 1 ? 1 : 0;
+    }
+
+    private String ruleParamName(Property property) {
+        return firstNonBlank(property.getBaseColumn(), property.getId(), property.getName(), "value");
     }
 
     private String firstNonBlank(String... values) {

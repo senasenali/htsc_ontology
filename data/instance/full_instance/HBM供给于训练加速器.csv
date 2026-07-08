@@ -1,0 +1,6 @@
+﻿sourceInstance,targetInstance,linkTypeName,sourceObjectType,targetObjectType,linkTypeCategory,source_url
+HBM3,NVIDIA H100 Tensor Core GPU,HBM供给于训练加速器,HBM,训练加速器,上游投入,https://www.nvidia.com/en-us/data-center/h200/
+HBM3E,NVIDIA H200 Tensor Core GPU,HBM供给于训练加速器,HBM,训练加速器,上游投入,https://www.nvidia.com/en-us/data-center/h200/
+HBM3E,NVIDIA B200 Tensor Core GPU,HBM供给于训练加速器,HBM,训练加速器,上游投入,https://www.nvidia.com/en-us/data-center/h200/
+HBM3E,NVIDIA GB200 NVL72,HBM供给于训练加速器,HBM,训练加速器,上游投入,https://www.nvidia.com/en-us/data-center/h200/
+HBM3E,AMD Instinct MI350 Series,HBM供给于训练加速器,HBM,训练加速器,上游投入,https://www.nvidia.com/en-us/data-center/h200/

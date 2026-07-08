@@ -1,4 +1,0 @@
-﻿nameCn,nameEn,objectTypeName,description,property.deposition_principle,property.deposition_rate,property.film_purity,property.process_temperature,property.step_coverage,property.thickness_control,property.uniformity
-ALD,Atomic Layer Deposition,薄膜沉积技术,原子层沉积：将物质以单原子膜形式一层一层镀在基底表面，每次反应只沉积一层原子，膜厚控制极精确,表面反应沉积（层状生长）,慢,均匀、杂质少,低,优秀,反应循环次数,优秀
-CVD,Chemical Vapor Deposition,薄膜沉积技术,化学气相沉积：使气态物质在固体表面发生化学反应并在该表面沉积，形成稳定的固态薄膜,气相反应沉积,快,易含杂质,高,好,沉积时间、气相分压,较好
-PVD,Physical Vapor Deposition,薄膜沉积技术,物理气相沉积：真空状态下加热原材料，使原子或分子从原材料表面逸出从而在衬底上生长薄膜，包括真空蒸镀、溅射镀膜等,蒸发凝固,快,无杂质,低,一般,沉积时间,一般

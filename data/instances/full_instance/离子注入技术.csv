@@ -1,4 +1,0 @@
-﻿nameCn,nameEn,objectTypeName,description,property.beam_current_level,property.beam_current_range,property.energy_level,property.energy_range,property.implantation_characteristic,property.target_application
-中低束流离子注入,Medium-low Current Ion Implantation,离子注入技术,电流<10mA，硅片固定、扫描离子束，用于中等剂量注入需求,中低束流,<10mA,视需求,视需求,中等剂量、扫描离子束,一般IC制造
-低能大束流离子注入,Low-energy High-current Ion Implantation,离子注入技术,能量<180keV、电流>10mA，应用于高端制程逻辑芯片(3-45nm)、FPGA、CPU、DRAM、3D存储器等,大束流,>10mA（可达25mA）,低能量,<180keV,高剂量注入、束流固定扫描硅片,高端逻辑芯片(3-45nm)、FPGA、CPU、DRAM、3D NAND
-高能离子注入,High-energy Ion Implantation,离子注入技术,能量>200keV，量级最高可达MeV，应用于功率器件IGBT、5G射频、光通信芯片等深结结构,视需求,视需求,高能量,>200keV（最高MeV级）,深结注入,IGBT功率器件、5G射频、光通信芯片、CIS

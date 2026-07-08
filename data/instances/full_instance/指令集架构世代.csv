@@ -1,5 +1,0 @@
-﻿nameCn,nameEn,objectTypeName,description
-ARMv8,ARMv8,指令集架构世代,ARM 64位架构
-ARMv9,ARMv9,指令集架构世代,ARM新一代架构
-RISC-V,RISC-V,指令集架构世代,开源精简指令集架构
-x86,x86,指令集架构世代,Intel/AMD 复杂指令集架构

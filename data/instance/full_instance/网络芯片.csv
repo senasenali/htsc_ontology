@@ -1,0 +1,2 @@
+﻿nameCn,nameEn,objectTypeName,description,property.network_protocol,property.port_speed,property.switching_capacity,property.interface_type,source_url
+NVLink Switch,NVLink Switch,网络芯片,NVIDIA scale-up switch silicon for NVLink rack-scale GPU domains.,NVLink,1.8 TB/s per GPU interconnect class,130 TB/s NVL72 domain,NVLink Switch fabric,https://www.nvidia.com/en-us/data-center/gb200-nvl72/

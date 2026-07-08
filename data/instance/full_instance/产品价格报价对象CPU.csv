@@ -1,0 +1,4 @@
+﻿sourceInstance,targetInstance,linkTypeName,sourceObjectType,targetObjectType,linkTypeCategory,source_url
+Intel Xeon 6980P official_rcp 13955 USD/per_processor,Intel Xeon 6980P,产品价格报价对象CPU,产品价格,CPU,报价对象,https://www.intel.com/content/www/us/en/products/sku/240777/intel-xeon-6980p-processor-504m-cache-2-00-ghz/ordering.html
+Intel Xeon 6780E official_rcp 9535 USD/per_processor,Intel Xeon 6780E,产品价格报价对象CPU,产品价格,CPU,报价对象,https://www.intel.com/content/www/us/en/products/sku/240362/intel-xeon-6780e-processor-108m-cache-2-20-ghz/ordering.html
+AMD EPYC 9965 industry_media_reported_official_1ku_price 14813 USD/per_processor_1ku,AMD EPYC 9965,产品价格报价对象CPU,产品价格,CPU,报价对象,https://www.tomshardware.com/pc-components/cpus/retailers-quietly-slash-prices-of-amds-and-intels-latest-epyc-and-xeon-cpus-by-up-to-50-percent-inexplicable-price-drops-left-unexplained

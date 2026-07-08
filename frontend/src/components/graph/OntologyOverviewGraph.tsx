@@ -9,14 +9,16 @@ import '@xyflow/react/dist/style.css';
 import { Link as LinkIcon, Sparkles, Plus, Minus, ArrowLeft } from 'lucide-react';
 import { Sheet, SheetContent, SheetTrigger } from '@/src/components/ui/sheet';
 import { AiStudio } from '@/src/pages/AiStudio';
-import { DandelionGraph } from '@/src/components/DandelionGraph';
 import { cn } from '@/src/lib/utils';
 import { api } from '@/src/api/client';
+
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
 const NODE_WIDTH = 170;
 const NODE_HEIGHT = 56;
+const COMPACT_NODE_WIDTH = 90;
+const COMPACT_NODE_HEIGHT = 30;
 const LEVEL_X_GAP = 260;
 const Y_GAP = 24;
 const SIBLING_GAP = 16;
@@ -28,6 +30,46 @@ const TECH_ROUTE_COLOR = '#0891b2';
 const COMPANY_COLOR = '#3b82f6';
 
 const PROJECT_ROOT_ID = '__project_root__';
+
+// ── Color helpers for hierarchical gradient ───────────────────────────────────
+
+function hexToRgb(hex: string): { r: number; g: number; b: number } {
+  const clean = hex.replace('#', '');
+  const bigint = parseInt(clean, 16);
+  return {
+    r: (bigint >> 16) & 255,
+    g: (bigint >> 8) & 255,
+    b: bigint & 255,
+  };
+}
+
+function rgbToHex(r: number, g: number, b: number): string {
+  return `#${[r, g, b].map(v => v.toString(16).padStart(2, '0')).join('')}`;
+}
+
+function getLuminance(r: number, g: number, b: number): number {
+  const a = [r, g, b].map(v => {
+    v /= 255;
+    return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4);
+  });
+  return a[0] * 0.2126 + a[1] * 0.7152 + a[2] * 0.0722;
+}
+
+/** Lighten a hex color toward white by ratio (0 = original, 1 = white) */
+function lighten(hex: string, ratio: number): string {
+  const { r, g, b } = hexToRgb(hex);
+  const t = Math.max(0, Math.min(1, ratio));
+  return rgbToHex(
+    Math.round(r + (255 - r) * t),
+    Math.round(g + (255 - g) * t),
+    Math.round(b + (255 - b) * t)
+  );
+}
+
+function getContrastColor(hex: string): string {
+  const { r, g, b } = hexToRgb(hex);
+  return getLuminance(r, g, b) > 0.5 ? '#1f2937' : '#ffffff';
+}
 
 interface SavedLayout {
   x: number;
@@ -270,17 +312,24 @@ const ObjectTypeNode = ({ id, data, selected }: NodeProps) => {
     );
   }
 
+  const depth = (data.depth as number) ?? 0;
+  const bgColor = isPending ? '#f9fafb' : lighten(color, Math.min(depth * 0.12, 0.65));
+  const textColor = isPending ? '#1f2937' : getContrastColor(bgColor);
+  const compact = (data.compact as boolean) ?? false;
+  const width = compact ? COMPACT_NODE_WIDTH : NODE_WIDTH;
+  const height = compact ? COMPACT_NODE_HEIGHT : NODE_HEIGHT;
+
   return (
     <div
       className="rounded-lg transition-all relative cursor-pointer flex flex-col justify-center"
       style={{
-        width: NODE_WIDTH,
-        height: NODE_HEIGHT,
+        width,
+        height,
         borderWidth: selected ? 2 : 1.5,
         borderStyle: isPending ? 'dashed' : 'solid',
         borderColor: isPending ? '#9ca3af' : color,
-        boxShadow: selected ? `0 0 0 3px ${color}33` : '0 1px 2px rgba(0,0,0,0.08)',
-        backgroundColor: isPending ? '#f9fafb' : '#ffffff',
+        boxShadow: selected ? `0 0 0 3px ${color}66` : '0 1px 2px rgba(0,0,0,0.08)',
+        backgroundColor: bgColor,
       }}
     >
       {isPending && (
@@ -291,9 +340,9 @@ const ObjectTypeNode = ({ id, data, selected }: NodeProps) => {
       <Handle type="target" position={Position.Top} id="top" className="!w-1.5 !h-1.5" style={{ background: color }} />
       <Handle type="target" position={Position.Left} id="left" className="!w-1.5 !h-1.5" style={{ background: color }} />
       <Handle type="source" position={Position.Left} id="left" className="!w-1.5 !h-1.5" style={{ background: color }} />
-      <div className="px-2.5 flex-1 flex flex-col justify-center min-w-0">
-        <div className="font-semibold text-[12px] text-slate-800 truncate leading-tight">{data.label as string}</div>
-        <div className="text-[10px] text-slate-400 truncate leading-tight mt-0.5 font-mono">{id}</div>
+      <div className={cn("flex-1 flex flex-col justify-center min-w-0", compact ? "px-1.5" : "px-2.5")}>
+        <div className={cn("font-semibold truncate leading-tight", compact ? "text-[9px]" : "text-[12px]")} style={{ color: textColor }}>{data.label as string}</div>
+        {!compact && <div className="text-[10px] truncate leading-tight mt-0.5 font-mono" style={{ color: textColor, opacity: 0.75 }}>{id}</div>}
       </div>
       <Handle type="target" position={Position.Right} id="right" className="!w-1.5 !h-1.5" style={{ background: color }} />
       <Handle type="source" position={Position.Right} id="right" className="!w-1.5 !h-1.5" style={{ background: color }} />
@@ -697,6 +746,202 @@ function buildLinkEdges(
   return edges;
 }
 
+// ── Dandelion radial view (same-canvas transformation) ────────────────────────
+
+function getNodeDepth(otId: string, objectTypes: ObjectType[]): number {
+  const ot = objectTypes.find(o => o.id === otId);
+  if (!ot || !ot.parentObjectType) return 0;
+  return 1 + getNodeDepth(ot.parentObjectType, objectTypes);
+}
+
+function buildDandelionView(
+  centerId: string,
+  allNodes: Node[],
+  linkTypes: LinkType[],
+  objectTypes: ObjectType[],
+  sectionColors: Map<string, string>,
+  onToggleCollapse: (id: string) => void
+): { nodes: Node[]; edges: Edge[] } {
+  const centerOt = objectTypes.find(o => o.id === centerId);
+  if (!centerOt) return { nodes: allNodes, edges: [] };
+
+  const relatedLinks = linkTypes.filter(
+    lt => lt.sourceObjectId === centerId || lt.targetObjectId === centerId
+  );
+
+  const relatedIds = new Set<string>([centerId]);
+  relatedLinks.forEach(lt => {
+    relatedIds.add(lt.sourceObjectId);
+    relatedIds.add(lt.targetObjectId);
+  });
+
+  const relatedOts = Array.from(relatedIds)
+    .map(id => objectTypes.find(o => o.id === id))
+    .filter((ot): ot is ObjectType => !!ot);
+
+  const upstreamIds = relatedLinks
+    .filter(lt => lt.targetObjectId === centerId)
+    .map(lt => lt.sourceObjectId);
+  const downstreamIds = relatedLinks
+    .filter(lt => lt.sourceObjectId === centerId)
+    .map(lt => lt.targetObjectId);
+
+  const transition = 'all 0.55s cubic-bezier(0.4, 0, 0.2, 1)';
+
+  // Structured dandelion layout:
+  // - GPU/center in the middle
+  // - upstream nodes on the left, downstream on the right
+  // - nodes grouped by hierarchy depth (same depth = same horizontal line)
+  // - deeper nodes (darker color) are closer to the center;
+  //   shallower nodes (lighter color) are farther to the sides
+  const COLUMN_GAP = 240;
+  const ROW_GAP = 52;
+
+  const existingNodeMap = new Map(allNodes.map(n => [n.id, n]));
+
+  // Decide each related node's primary direction. If a node has both upstream
+  // and downstream links to the center, keep the side with more links.
+  const upstreamCount = new Map<string, number>();
+  const downstreamCount = new Map<string, number>();
+  relatedLinks.forEach(lt => {
+    if (lt.targetObjectId === centerId) {
+      upstreamCount.set(lt.sourceObjectId, (upstreamCount.get(lt.sourceObjectId) || 0) + 1);
+    } else {
+      downstreamCount.set(lt.targetObjectId, (downstreamCount.get(lt.targetObjectId) || 0) + 1);
+    }
+  });
+
+  const directionOf = new Map<string, 'upstream' | 'downstream'>();
+  upstreamCount.forEach((count, id) => {
+    const down = downstreamCount.get(id) || 0;
+    directionOf.set(id, count >= down ? 'upstream' : 'downstream');
+  });
+  downstreamCount.forEach((count, id) => {
+    if (!directionOf.has(id)) directionOf.set(id, 'downstream');
+  });
+
+  // Group by direction and depth
+  const upstreamByDepth = new Map<number, ObjectType[]>();
+  const downstreamByDepth = new Map<number, ObjectType[]>();
+  let maxDepth = 0;
+
+  relatedOts.forEach(ot => {
+    if (ot.id === centerId) return;
+    const depth = getNodeDepth(ot.id, objectTypes);
+    maxDepth = Math.max(maxDepth, depth);
+    const dir = directionOf.get(ot.id) || 'downstream';
+    const map = dir === 'upstream' ? upstreamByDepth : downstreamByDepth;
+    if (!map.has(depth)) map.set(depth, []);
+    map.get(depth)!.push(ot);
+  });
+
+  // Helper to sort nodes by name (stable, readable order)
+  const sortByName = (a: ObjectType, b: ObjectType) => a.name.localeCompare(b.name, 'zh-CN');
+
+  // Assign positions
+  const positionMap = new Map<string, { x: number; y: number }>();
+  positionMap.set(centerId, { x: 0, y: 0 });
+
+  const allDepths = new Set([...upstreamByDepth.keys(), ...downstreamByDepth.keys()]);
+  const sortedDepths = Array.from(allDepths).sort((a, b) => a - b);
+
+  sortedDepths.forEach(depth => {
+    const upNodes = (upstreamByDepth.get(depth) || []).sort(sortByName);
+    const downNodes = (downstreamByDepth.get(depth) || []).sort(sortByName);
+    const maxCount = Math.max(upNodes.length, downNodes.length, 1);
+    const colIndex = maxDepth - depth + 1; // deeper = closer to center
+    const xOffset = colIndex * COLUMN_GAP;
+
+    upNodes.forEach((ot, i) => {
+      const y = (i - (maxCount - 1) / 2) * ROW_GAP;
+      positionMap.set(ot.id, { x: -xOffset, y });
+    });
+    downNodes.forEach((ot, i) => {
+      const y = (i - (maxCount - 1) / 2) * ROW_GAP;
+      positionMap.set(ot.id, { x: xOffset, y });
+    });
+  });
+
+  const resultNodes: Node[] = allNodes.map(n => {
+    if (!relatedIds.has(n.id)) {
+      return {
+        ...n,
+        style: { ...n.style, transition, opacity: 0, pointerEvents: 'none' },
+        data: { ...n.data, selected: false },
+      };
+    }
+    return n;
+  });
+
+  // Add/update related nodes
+  relatedOts.forEach(ot => {
+    const isCenter = ot.id === centerId;
+    const pos = positionMap.get(ot.id) || { x: 0, y: 0 };
+
+    const color = sectionColors.get(ot.id) || '#6b7280';
+    const existing = existingNodeMap.get(ot.id);
+
+    const newNode: Node = {
+      id: ot.id,
+      type: 'objectType',
+      position: existing ? existing.position : pos,
+      style: { transition, opacity: 1, pointerEvents: 'auto' },
+      data: {
+        label: ot.name,
+        id: ot.id,
+        properties: ot.properties,
+        color,
+        selected: isCenter,
+        status: ot.status,
+        depth: getNodeDepth(ot.id, objectTypes),
+        hasChildren: false,
+        collapsed: false,
+        compact: !isCenter,
+        onToggleCollapse,
+      },
+    };
+
+    const existingIndex = resultNodes.findIndex(n => n.id === ot.id);
+    if (existingIndex >= 0) {
+      resultNodes[existingIndex] = {
+        ...resultNodes[existingIndex],
+        ...newNode,
+        position: pos,
+      };
+    } else {
+      resultNodes.push(newNode);
+    }
+  });
+
+  const edges: Edge[] = relatedLinks.map(lt => {
+    const isOutgoing = lt.sourceObjectId === centerId;
+    return {
+      id: lt.id,
+      source: lt.sourceObjectId,
+      target: lt.targetObjectId,
+      // All links visually flow left-to-right: source uses its right handle,
+      // target uses its left handle, so curves stay close to the nodes.
+      sourceHandle: 'right',
+      targetHandle: 'left',
+      type: 'default',
+      label: `${lt.name} (${lt.cardinality})`,
+      style: {
+        stroke: isOutgoing ? '#10b981' : '#3b82f6',
+        strokeWidth: 2.5,
+        opacity: 1,
+        transition,
+      },
+      labelStyle: { fill: '#475569', fontWeight: 500, fontSize: 11 },
+      labelBgStyle: { fill: '#ffffff', fillOpacity: 0.95 },
+      labelBgPadding: [6, 3] as [number, number],
+      labelBgBorderRadius: 4,
+      selectable: false,
+    };
+  });
+
+  return { nodes: resultNodes, edges };
+}
+
 // ── Fit view controller ───────────────────────────────────────────────────────
 
 function FitViewController({ nodeCount }: { nodeCount: number }) {
@@ -881,28 +1126,46 @@ export const OntologyOverviewGraph: React.FC<OntologyOverviewGraphProps> = ({
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
 
   useEffect(() => {
+    if (dandelionCenterId) return;
     const updatedNodes = initialNodes.map(n => ({
       ...n,
+      style: {
+        ...n.style,
+        transition: isOperationMode ? undefined : 'all 0.5s cubic-bezier(0.4, 0, 0.2, 1)',
+      },
       data: { ...n.data, selected: n.id === selectedObjectId },
     }));
     setNodes(updatedNodes);
     setEdges(initialEdges);
-  }, [initialNodes, initialEdges, selectedObjectId, setNodes, setEdges]);
+  }, [initialNodes, initialEdges, selectedObjectId, setNodes, setEdges, isOperationMode, dandelionCenterId]);
+
+  const dandelionView = useMemo(
+    () =>
+      dandelionCenterId
+        ? buildDandelionView(dandelionCenterId, nodes, data.linkTypes, data.objectTypes, sectionColors, onToggleCollapse)
+        : null,
+    [dandelionCenterId, nodes, data.linkTypes, data.objectTypes, sectionColors, onToggleCollapse]
+  );
+
+  const displayNodes = dandelionView ? dandelionView.nodes : nodes;
+  const displayEdges = dandelionView ? dandelionView.edges : edges;
+
+  // Auto-enter/exit dandelion view based on selected object
+  useEffect(() => {
+    if (!selectedObjectId) {
+      setDandelionCenterId(null);
+      return;
+    }
+    const hasLinks = data.linkTypes.some(
+      lt => lt.sourceObjectId === selectedObjectId || lt.targetObjectId === selectedObjectId
+    );
+    setDandelionCenterId(hasLinks ? selectedObjectId : null);
+  }, [selectedObjectId, data.linkTypes]);
 
   const onNodeClick = useCallback((_event: any, node: Node) => {
     if (node.id === PROJECT_ROOT_ID) return;
-
-    const isLeaf = !data.objectTypes.some(ot => ot.parentObjectType === node.id);
-    const hasLinks = data.linkTypes.some(
-      lt => lt.sourceObjectId === node.id || lt.targetObjectId === node.id
-    );
-
     onSelectObject(selectedObjectId === node.id ? null : node.id);
-
-    if (isLeaf && hasLinks) {
-      setDandelionCenterId(node.id);
-    }
-  }, [data.objectTypes, data.linkTypes, onSelectObject, selectedObjectId]);
+  }, [onSelectObject, selectedObjectId]);
 
   const onPaneClick = useCallback(() => {
     onSelectObject(null);
@@ -939,14 +1202,6 @@ export const OntologyOverviewGraph: React.FC<OntologyOverviewGraphProps> = ({
     return labels;
   }, [nodes]);
 
-  const dandelionCenterObject = dandelionCenterId
-    ? data.objectTypes.find(o => o.id === dandelionCenterId) || null
-    : null;
-
-  const relatedLinks = dandelionCenterId
-    ? data.linkTypes.filter(lt => lt.sourceObjectId === dandelionCenterId || lt.targetObjectId === dandelionCenterId)
-    : [];
-
   return (
     <div className="flex-1 flex flex-col overflow-hidden bg-slate-50">
       {/* Toolbar */}
@@ -964,7 +1219,10 @@ export const OntologyOverviewGraph: React.FC<OntologyOverviewGraphProps> = ({
         </button>
         {dandelionCenterId && (
           <button
-            onClick={() => setDandelionCenterId(null)}
+            onClick={() => {
+              setDandelionCenterId(null);
+              onSelectObject(null);
+            }}
             className="h-7 px-3 rounded-md text-xs font-medium transition-colors border bg-indigo-50 text-indigo-600 border-indigo-200 hover:bg-indigo-100 flex items-center gap-1"
           >
             <ArrowLeft className="w-3.5 h-3.5" />
@@ -1002,78 +1260,76 @@ export const OntologyOverviewGraph: React.FC<OntologyOverviewGraphProps> = ({
 
       {/* Graph area */}
       <div className="flex-1 flex overflow-hidden relative">
-        {!dandelionCenterId && (
-          <div className="flex-1 bg-slate-50">
-            <ReactFlow
-              nodes={nodes}
-              edges={edges}
-              onNodesChange={onNodesChange}
-              onEdgesChange={onEdgesChange}
-              onNodeClick={onNodeClick}
-              onPaneClick={onPaneClick}
-              nodeTypes={nodeTypes}
-              nodesDraggable={isOperationMode}
-              fitView
-              attributionPosition="bottom-right"
-              minZoom={0.1}
-              maxZoom={2}
-            >
-              <Panel position="top-left" className="!m-2">
-                <Controls className="bg-white border-slate-200 shadow-sm !static" showInteractive={false} />
-              </Panel>
+        <div className="flex-1 bg-slate-50">
+          <ReactFlow
+            nodes={displayNodes}
+            edges={displayEdges}
+            onNodesChange={onNodesChange}
+            onEdgesChange={onEdgesChange}
+            onNodeClick={onNodeClick}
+            onPaneClick={onPaneClick}
+            nodeTypes={nodeTypes}
+            nodesDraggable={isOperationMode && !dandelionCenterId}
+            fitView
+            attributionPosition="bottom-right"
+            minZoom={0.1}
+            maxZoom={2}
+          >
+            <Panel position="top-left" className="!m-2">
+              <Controls className="bg-white border-slate-200 shadow-sm !static" showInteractive={false} />
+            </Panel>
 
-              <Panel position="bottom-left" className="!m-2">
-                <MiniMap
-                  nodeColor={node => {
-                    if (techRouteAllIds.has(node.id)) return TECH_ROUTE_COLOR;
-                    const ot = data.objectTypes.find(o => o.id === node.id);
-                    if (ot?.id === 'company_entity') return COMPANY_COLOR;
-                    if (ot?.id === 'semiconductor_industry_chain') return INDUSTRY_COLOR;
-                    return '#6b7280';
-                  }}
-                  maskColor="rgba(248, 250, 252, 0.7)"
-                  className="bg-white border border-slate-200 rounded-lg shadow-sm"
-                />
-              </Panel>
+            <Panel position="bottom-left" className="!m-2">
+              <MiniMap
+                nodeColor={node => {
+                  const baseColor = sectionColors.get(node.id);
+                  if (!baseColor) return '#6b7280';
+                  return baseColor;
+                }}
+                maskColor="rgba(248, 250, 252, 0.7)"
+                className="bg-white border border-slate-200 rounded-lg shadow-sm"
+              />
+            </Panel>
 
-              <Panel position="bottom-right" className="!m-4">
-                <Sheet open={aiSheetOpen} onOpenChange={setAiSheetOpen}>
-                  <SheetTrigger asChild>
-                    <button
-                      className={cn(
-                        "w-12 h-12 rounded-full bg-gradient-to-br from-purple-500 to-blue-600",
-                        "flex items-center justify-center gap-1",
-                        "text-white text-xs font-medium",
-                        "shadow-lg hover:shadow-xl hover:scale-105",
-                        "transition-all duration-300",
-                        "group relative"
-                      )}
-                    >
-                      <Sparkles className="w-5 h-5" />
-                      <span className="text-[10px]">AI</span>
-                      <div className={cn(
-                        "absolute right-full mr-3 top-1/2 -translate-y-1/2",
-                        "bg-slate-800 text-white text-xs px-2 py-1 rounded whitespace-nowrap",
-                        "opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"
-                      )}>
-                        AI本体建模
-                      </div>
-                    </button>
-                  </SheetTrigger>
-                  <SheetContent
-                    side="right"
-                    className="w-[600px] sm:max-w-[600px] p-0 bg-slate-50/95 backdrop-blur-sm"
-                    style={{ '--sheet-overlay-opacity': '0.3' } as React.CSSProperties}
+            <Panel position="bottom-right" className="!m-4">
+              <Sheet open={aiSheetOpen} onOpenChange={setAiSheetOpen}>
+                <SheetTrigger asChild>
+                  <button
+                    className={cn(
+                      "w-12 h-12 rounded-full bg-gradient-to-br from-purple-500 to-blue-600",
+                      "flex items-center justify-center gap-1",
+                      "text-white text-xs font-medium",
+                      "shadow-lg hover:shadow-xl hover:scale-105",
+                      "transition-all duration-300",
+                      "group relative"
+                    )}
                   >
-                    <AiStudio data={data} onUpdate={onUpdate || (() => {})} embedded />
-                  </SheetContent>
-                </Sheet>
-              </Panel>
+                    <Sparkles className="w-5 h-5" />
+                    <span className="text-[10px]">AI</span>
+                    <div className={cn(
+                      "absolute right-full mr-3 top-1/2 -translate-y-1/2",
+                      "bg-slate-800 text-white text-xs px-2 py-1 rounded whitespace-nowrap",
+                      "opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"
+                    )}>
+                      AI本体建模
+                    </div>
+                  </button>
+                </SheetTrigger>
+                <SheetContent
+                  side="right"
+                  className="w-[600px] sm:max-w-[600px] p-0 bg-slate-50/95 backdrop-blur-sm"
+                  style={{ '--sheet-overlay-opacity': '0.3' } as React.CSSProperties}
+                >
+                  <AiStudio data={data} onUpdate={onUpdate || (() => {})} embedded />
+                </SheetContent>
+              </Sheet>
+            </Panel>
 
-              <Background color="#cbd5e1" gap={20} />
+            <Background color="#cbd5e1" gap={20} />
 
-              <FitViewController nodeCount={nodes.length} />
+            <FitViewController nodeCount={displayNodes.length} />
 
+            {!dandelionCenterId && (
               <Panel position="top-left" className="!ml-4 !mt-2" style={{ pointerEvents: 'none' }}>
                 <div className="flex flex-col gap-0" style={{ marginTop: 30 }}>
                   {sectionLabels.map(sl => (
@@ -1094,43 +1350,9 @@ export const OntologyOverviewGraph: React.FC<OntologyOverviewGraphProps> = ({
                   ))}
                 </div>
               </Panel>
-            </ReactFlow>
-          </div>
-        )}
-
-        {dandelionCenterObject && (
-          <div className="flex-1 bg-slate-50 flex flex-col overflow-hidden">
-            <div className="px-6 py-3 border-b border-slate-200 bg-white flex items-center justify-between shrink-0">
-              <div className="flex items-center gap-3">
-                <button
-                  onClick={() => setDandelionCenterId(null)}
-                  className="flex items-center gap-1 text-xs text-indigo-600 hover:text-indigo-700 font-medium"
-                >
-                  <ArrowLeft className="w-3.5 h-3.5" />
-                  返回树状图谱
-                </button>
-                <span className="text-slate-300">|</span>
-                <h2 className="text-sm font-semibold text-slate-800">
-                  {dandelionCenterObject.name} 的关系蒲公英图
-                </h2>
-              </div>
-              <p className="text-xs text-slate-500">
-                蓝色 = 上游，绿色 = 下游，点击花瓣查看其蒲公英图
-              </p>
-            </div>
-            <div className="flex-1 flex items-center justify-center overflow-auto">
-              <DandelionGraph
-                center={dandelionCenterObject}
-                relatedLinks={relatedLinks}
-                allObjects={data.objectTypes}
-                onNodeClick={ot => {
-                  onSelectObject(ot.id);
-                  setDandelionCenterId(ot.id);
-                }}
-              />
-            </div>
-          </div>
-        )}
+            )}
+          </ReactFlow>
+        </div>
       </div>
     </div>
   );
